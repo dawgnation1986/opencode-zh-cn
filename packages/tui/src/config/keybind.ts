@@ -89,6 +89,18 @@ export const Definitions = {
   "diff.mark_reviewed": keybind("m", "切换所选 diff 文件的已审阅状态"),
   "diff.help": keybind("?,shift+?,shift+/", "显示更多 diff 查看器快捷键"),
 
+  "files.open": keybind("shift+f", "打开文件浏览器"),
+  "files.close": keybind("shift+escape", "关闭文件浏览器"),
+  "files.parent": keybind("escape", "返回上一级文件或目录"),
+  "files.up": keybind("k,up", "向上移动文件选择"),
+  "files.down": keybind("j,down", "向下移动文件选择"),
+  "files.page_up": keybind("pageup,ctrl+b", "向上翻页文件列表"),
+  "files.page_down": keybind("pagedown,ctrl+f", "向下翻页文件列表"),
+  "files.home": keybind("gg,home", "跳到文件列表开头"),
+  "files.end": keybind("shift+g,end", "跳到文件列表结尾"),
+  "files.select": keybind("return", "打开所选文件或目录"),
+  "files.refresh": keybind("r", "刷新文件列表"),
+
   "prompt.editor": keybind("<leader>e", "打开外部编辑器"),
   "theme.switch": keybind("none", "列出可用主题"),
   "theme.switch_mode": keybind("none", "在浅色和深色主题模式之间切换"),

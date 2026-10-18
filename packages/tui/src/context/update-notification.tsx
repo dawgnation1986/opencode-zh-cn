@@ -1,4 +1,5 @@
-import { createSignal, onCleanup, onMount } from "solid-js"
+import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js"
+import { openUrl } from "@opencode/util/open"
 import { createSimpleContext } from "./helper"
 import { useLog } from "./log"
 import { useStorage } from "./storage"
@@ -8,6 +9,15 @@ import { useExit } from "./exit"
 import { useDialog } from "../ui/dialog"
 import { DialogUpdate } from "../component/dialog-update"
 import { DialogConfirm } from "../ui/dialog-confirm"
+import { DialogSelect } from "../ui/dialog-select"
+import {
+  type UpdateChannel,
+  ZH_CN_FLAVOR,
+  ZH_CN_LATEST_API,
+  ZH_CN_RELEASE_REPO,
+  ZH_CN_RELEASES_URL,
+  zhCnIsNewer,
+} from "../util/zh-cn"
 
 type ClientNotice = { readonly type: "available" | "installed"; readonly version: string }
 type Notice = ClientNotice & ({ readonly source: "client" } | { readonly source: "server"; readonly remote: boolean })
@@ -52,6 +62,49 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       })
     }
 
+    const [preference, setPreference] = useStorage().store<{ channel: UpdateChannel }>("update-channel", {
+      initial: { channel: "official" },
+    })
+    const channel = () => preference.channel
+    const setChannel = (next: UpdateChannel) =>
+      setPreference((draft) => {
+        draft.channel = next
+      }).catch((error) => log.error("failed to persist update channel", { error }))
+
+    // The zh-cn channel only reads the localization repository's GitHub Releases.
+    const zhCnLatest = async (signal: AbortSignal): Promise<string | undefined> => {
+      const response = await fetch(ZH_CN_LATEST_API, {
+        signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
+        headers: { accept: "application/vnd.github+json" },
+      })
+      if (!response.ok) throw new Error(`GitHub 返回 HTTP ${response.status}`)
+      const data: { tag_name?: string } = await response.json()
+      return data.tag_name
+    }
+
+    const notifyZhCn = (version: string) => {
+      if (notifications.versions.includes(`client:${version}`) || notifications.versions.includes(version)) return
+      setNotification((current) => {
+        if (current?.source === "server") return current
+        return { source: "client", type: "available", version }
+      })
+    }
+
+    createEffect(
+      on(channel, () => {
+        if (channel() !== "zh-cn") return
+        const controller = new AbortController()
+        onCleanup(() => controller.abort())
+        void zhCnLatest(controller.signal)
+          .then((tag) => {
+            if (tag && zhCnIsNewer(tag, ZH_CN_FLAVOR)) notifyZhCn(tag)
+          })
+          .catch((error) => {
+            if (!controller.signal.aborted) log.error("failed to check zh-cn release", { error })
+          })
+      }),
+    )
+
     const dismiss = () => {
       const current = notification()
       if (!current) return
@@ -73,9 +126,11 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
     }
 
     const install = async () => {
-      const updater = props.updater
       const current = state()
-      if (!updater || !current || current.type !== "available") return
+      if (!current || current.type !== "available") return
+      if (channel() === "zh-cn") return installZhCn()
+      const updater = props.updater
+      if (!updater) return
       dialog.replace(() => (
         <DialogConfirm
           title="更新将替换为官方英文版"
@@ -90,7 +145,26 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       ))
     }
 
+    const installZhCn = () => {
+      dialog.replace(() => (
+        <DialogConfirm
+          title="前往下载汉化版更新"
+          message={`汉化渠道不会自动覆盖当前程序。将打开 GitHub Releases 页面，请手动下载并替换为最新汉化版本。\n${ZH_CN_RELEASES_URL}`}
+          label={{ confirm: "打开下载页", cancel: "取消" }}
+          onConfirm={() => {
+            void openUrl(ZH_CN_RELEASES_URL).catch((error) => log.error("failed to open releases page", { error }))
+          }}
+          onCancel={show}
+        />
+      ))
+    }
+
     const check = async (signal: AbortSignal) => {
+      if (channel() === "zh-cn") {
+        const tag = await zhCnLatest(signal)
+        if (tag && zhCnIsNewer(tag, ZH_CN_FLAVOR)) setState({ type: "available", version: tag })
+        return
+      }
       const updater = props.updater
       if (!updater || state()?.type === "installing") return
       const result = await updater
@@ -115,6 +189,7 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       const status = state()?.type
       dialog.replace(() => (
         <DialogUpdate
+          flavor={channel()}
           check={status === undefined || status === "failed" ? check : undefined}
           state={state}
           skip={dismiss}
@@ -124,8 +199,37 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       ))
     }
 
+    const openChannel = () => {
+      dialog.replace(() => (
+        <DialogSelect
+          title="更新渠道"
+          renderFilter={false}
+          options={[
+            {
+              title: "官方渠道",
+              value: "official",
+              description: "检测 opencode.ai 官方更新，可自动安装",
+              onSelect: (dialog) => {
+                void setChannel("official")
+                dialog.clear()
+              },
+            },
+            {
+              title: "汉化渠道",
+              value: "zh-cn",
+              description: `检测 ${ZH_CN_RELEASE_REPO} 的 GitHub Releases，仅提示下载`,
+              onSelect: (dialog) => {
+                void setChannel("zh-cn")
+                dialog.clear()
+              },
+            },
+          ]}
+        />
+      ))
+    }
+
     const open = (origin: "manual" | "notification") => {
-      if (!props.updater) return
+      if (!props.updater && channel() !== "zh-cn") return
       const current = notification()
       const known = current && (current.source === "client" || !current.remote) ? current : undefined
       if (origin === "notification" && !known) return
@@ -138,18 +242,24 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
 
     onMount(() => {
       if (!props.updater) return
-      onCleanup(props.updater.subscribe((notice) => notify({ ...notice, source: "client" })))
+      onCleanup(
+        props.updater.subscribe((notice) => {
+          if (channel() === "zh-cn") return
+          notify({ ...notice, source: "client" })
+        }),
+      )
     })
 
     onCleanup(
-      event.on("installation.update-available", (event) =>
+      event.on("installation.update-available", (event) => {
+        if (channel() === "zh-cn") return
         notify({
           source: "server",
           remote: props.updater?.remote ?? false,
           type: "available",
           version: event.data.version,
-        }),
-      ),
+        })
+      }),
     )
     onCleanup(
       event.on("installation.updated", (event) =>
@@ -165,6 +275,9 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
     return {
       notification,
       dismiss,
+      channel,
+      setChannel,
+      openChannel,
       open: props.updater ? open : undefined,
     }
   },

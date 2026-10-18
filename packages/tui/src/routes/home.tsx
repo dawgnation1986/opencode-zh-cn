@@ -165,7 +165,9 @@ function UpdateNotification(props: { width: number }) {
                   ? "远程服务器有可用更新"
                   : state.type === "installed"
                     ? ` 重启以使用 v${state.version}`
-                    : ` 安装 v${state.version}`}
+                    : update.channel() === "zh-cn"
+                      ? ` 下载 v${state.version}`
+                      : ` 安装 v${state.version}`}
               </FadeInText>
             </box>
           </Show>

@@ -1,18 +1,15 @@
 import { For } from "solid-js"
 import { useTheme } from "../context/theme"
 import { DialogHeader, DialogLayout } from "../ui/dialog"
-
-const FLAVOR = "zh-cn-v1.0.0"
-const BASE = "OpenCode 2.0（官方包版本 2.0.32）"
-const UPSTREAM = "63c1a27（2026-10-17）"
+import { ZH_CN_BASE, ZH_CN_FLAVOR, ZH_CN_UPSTREAM } from "../util/zh-cn"
 
 export function DialogWho(props: { version: string }) {
   const theme = useTheme().surface("dialog")
   const rows = () => [
-    { label: "汉化版本", value: FLAVOR },
+    { label: "汉化版本", value: ZH_CN_FLAVOR },
     { label: "程序版本", value: props.version },
-    { label: "官方基线", value: BASE },
-    { label: "上游提交", value: UPSTREAM },
+    { label: "官方基线", value: ZH_CN_BASE },
+    { label: "上游提交", value: ZH_CN_UPSTREAM },
     { label: "运行平台", value: `${process.platform}-${process.arch}` },
   ]
   return (

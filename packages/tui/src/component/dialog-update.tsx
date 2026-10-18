@@ -13,6 +13,8 @@ export function DialogUpdate(props: {
   skip: () => void
   install: () => Promise<void>
   restart: () => void
+  /** Which update channel produced the state; the zh-cn channel only offers a download. */
+  flavor?: "official" | "zh-cn"
 }) {
   const dialog = useDialog()
   const theme = useTheme().surface("dialog")
@@ -47,7 +49,7 @@ export function DialogUpdate(props: {
     if (type === "installing") return []
     const confirm =
       type === "available"
-        ? { label: "更新", run: props.install }
+        ? { label: props.flavor === "zh-cn" ? "下载" : "更新", run: props.install }
         : type === "installed"
           ? { label: "重启", run: props.restart }
           : undefined
@@ -136,8 +138,10 @@ export function DialogUpdate(props: {
               <Spinner shimmer={theme.text.base}>正在检查更新…</Spinner>
             </Match>
             <Match when={current.type === "available"}>
-              <text fg={theme.text.muted}>
-                有新版本可用。安装后将提示你重启 OpenCode。
+              <text fg={theme.text.muted} wrapMode="word">
+                {props.flavor === "zh-cn"
+                  ? "汉化渠道有新版本可用。将打开 GitHub Releases 页面提示你手动下载，不会自动覆盖当前程序。"
+                  : "有新版本可用。安装后将提示你重启 OpenCode。"}
               </text>
             </Match>
             <Match when={current.type === "installing"}>

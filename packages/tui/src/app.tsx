@@ -1038,6 +1038,13 @@ function App() {
           ]
         : []),
       {
+        name: "opencode.channel",
+        title: "切换更新渠道",
+        slash: { name: "channel" },
+        run: () => updater.openChannel(),
+        category: "System",
+      },
+      {
         name: "server.pair",
         title: "配对设备",
         slash: { name: "pair", aliases: ["web"] },
