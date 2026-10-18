@@ -21,6 +21,7 @@
     "./mini/tool": "./src/mini/tool.public.ts",
     "./model-preference": "./src/model-preference.ts",
     "./util/form": "./src/util/form.ts",
+    "./util/zh-cn": "./src/util/zh-cn.ts",
     "./logo": "./src/logo.ts",
     "./component/spinner": "./src/component/spinner.tsx",
     "./component/register-spinner": "./src/component/register-spinner.ts"

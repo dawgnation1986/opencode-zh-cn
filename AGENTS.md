@@ -6,13 +6,13 @@
 ## 汉化发布构建（opencode-zh-cn Fork）
 
 - 发布仓库为 `dawgnation1986/opencode-zh-cn`，默认分支 `main`；产物是 Windows x64 单文件 `opencode.exe`（挂在 GitHub Release 资产上，`dist/` 不入库）。
-- 汉化版本标记在 `packages/tui/src/util/zh-cn.ts` 的 `ZH_CN_FLAVOR`，每次发版递增（如 `zh-cn-v1.1.5`）；官方基线仍是 `2.0.32`。
-- **构建时必须显式传入 `OPENCODE_VERSION` 与 `OPENCODE_CHANNEL`**：`packages/script/src/index.ts` 在 `OPENCODE_CHANNEL` 未设置时会拿当前 git 分支名当 channel，本仓库构建分支是 `dev`，于是 `IS_PREVIEW` 取真、`VERSION` 退化成 `0.0.0-dev-<时间戳>` 预览占位，splash 和 `/who` 就会显示 `0.0.0-dev-...`（历史上反复出现的“开发版本号又不见了”就是这个原因）。
+- 程序版本命名规则：**官方版本 + 汉化后缀**，形如 `2.0.32+zh-cn-v1.1.5`。官方版本来自构建注入的 `OPENCODE_VERSION`，后缀来自 `packages/tui/src/util/zh-cn.ts` 的 `ZH_CN_FLAVOR`；两者在 `packages/cli/src/version.ts` 合成 `OPENCODE_DISPLAY_VERSION`（splash、底部状态栏、`/who` 都显示它）。发版只需改 `ZH_CN_FLAVOR` 一个常量，后缀会自动拼上，不会再出现“后缀丢失”。
+- **构建时必须显式传入 `OPENCODE_VERSION=2.0.32` 与 `OPENCODE_CHANNEL=latest`**：`packages/script/src/index.ts` 在 `OPENCODE_CHANNEL` 未设置时会拿当前 git 分支名当 channel，本仓库构建分支是 `dev`，于是 `IS_PREVIEW` 取真、版本退化成 `0.0.0-dev-<时间戳>` 预览占位（且内联 sourcemap，产物更大），splash 和 `/who` 就会显示 `0.0.0-dev-...`（历史上反复出现的“开发版本号又不见了”就是这个原因）。
 - 正确构建命令（Bun 1.4.2，两个变量缺一不可）：
 
   ```
   cd packages/cli
-  OPENCODE_VERSION=2.0.32 OPENCODE_CHANNEL=latest bun run script/build.ts --target=win32-x64 --skip-web-ui
+  OPENCODE_VERSION=2.0.32 OPENCODE_CHANNEL=latest bun run script/build.ts --target=opencode-windows-x64 --skip-web-ui
   ```
 
   产物路径：`packages/cli/dist/cli-windows-x64/bin/opencode.exe`。
