@@ -11,6 +11,33 @@ export { normalizePromptContent } from "./prompt/content"
 
 type EditorStdio = "inherit" | "pipe" | "ignore" | number | Stream
 
+/** Opens an existing file path in the user's external editor without copying it through a temp buffer. */
+export async function openFilePath(input: { path: string; renderer: CliRenderer; cwd?: string }) {
+  const editor = process.env.VISUAL || process.env.EDITOR
+  if (!editor) throw new Error("Set $VISUAL or $EDITOR to open an external editor")
+  input.renderer.suspend()
+  input.renderer.currentRenderBuffer.clear()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const parts = editor.split(" ")
+      const child = spawn(parts[0]!, [...parts.slice(1), input.path], {
+        cwd: input.cwd && existsSync(input.cwd) ? input.cwd : process.cwd(),
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      })
+      child.on("error", reject)
+      child.on("exit", (code, signal) => {
+        if (code === 0) return resolve()
+        reject(new Error(`Editor exited with ${signal ? `signal ${signal}` : `code ${code}`}`))
+      })
+    })
+  } finally {
+    input.renderer.currentRenderBuffer.clear()
+    input.renderer.resume()
+    input.renderer.requestRender()
+  }
+}
+
 export async function openEditor(input: { value: string; renderer: CliRenderer; cwd?: string; stdin?: EditorStdio }) {
   const editor = process.env.VISUAL || process.env.EDITOR
   if (!editor) throw new Error("Set $VISUAL or $EDITOR to open an external editor")

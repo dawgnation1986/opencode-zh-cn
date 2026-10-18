@@ -6,6 +6,8 @@ import { MouseButton, TextAttributes, type ScrollBoxRenderable } from "@opentui/
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js"
 import { useTheme } from "../../context/theme"
+import { openFilePath } from "../../editor"
+import { errorMessage } from "../../util/error"
 import { stringWidth } from "../../util/string-width"
 
 const ROUTE = "files"
@@ -155,9 +157,26 @@ function FileBrowser(props: {
     props.onClose()
   }
 
+  // The previewed file wins; otherwise the highlighted row opens when it is a regular file.
+  const editablePath = () => {
+    const previewed = openFile()
+    if (previewed) return previewed
+    const entry = rows()[selected()]
+    return entry && entry.type !== "directory" ? entry.path : undefined
+  }
+
+  const edit = () => {
+    const path = editablePath()
+    if (!path) return
+    void openFilePath({ path, renderer: props.context.renderer, cwd: location().directory }).catch((error) =>
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) }),
+    )
+  }
+
   const commands: KeymapCommand[] = [
     { id: "files.close", title: "关闭文件浏览器", group: "文件", run: close },
     { id: "files.parent", title: "返回上一级", group: "文件", run: back },
+    { id: "files.edit", title: "用外部编辑器打开", group: "文件", run: edit },
     { id: "files.up", title: "向上移动文件选择", group: "文件", run: () => move(-1) },
     { id: "files.down", title: "向下移动文件选择", group: "文件", run: () => move(1) },
     { id: "files.page_up", title: "向上翻页文件列表", group: "文件", run: () => page(-1) },
@@ -322,7 +341,7 @@ function FileBrowser(props: {
         backgroundColor={surface()}
       >
         <text fg={theme.text.muted} flexGrow={1} minWidth={0} wrapMode="none" truncate selectable={false}>
-          {`${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.close")} 关闭`}
+          {`${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.edit")} 编辑  ${shortcut("files.close")} 关闭`}
         </text>
       </box>
     </box>
