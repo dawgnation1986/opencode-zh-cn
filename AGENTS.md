@@ -3,6 +3,22 @@
 - This repository does not use Changesets. Do not add `.changeset` files; follow the existing release workflow instead.
 - The default branch is `dev`. Base branches and worktrees on `origin/dev`, target PRs at `dev`, and diff against `origin/dev` unless told otherwise.
 
+## 汉化发布构建（opencode-zh-cn Fork）
+
+- 发布仓库为 `dawgnation1986/opencode-zh-cn`，默认分支 `main`；产物是 Windows x64 单文件 `opencode.exe`（挂在 GitHub Release 资产上，`dist/` 不入库）。
+- 汉化版本标记在 `packages/tui/src/util/zh-cn.ts` 的 `ZH_CN_FLAVOR`，每次发版递增（如 `zh-cn-v1.1.5`）；官方基线仍是 `2.0.32`。
+- **构建时必须显式传入 `OPENCODE_VERSION` 与 `OPENCODE_CHANNEL`**：`packages/script/src/index.ts` 在 `OPENCODE_CHANNEL` 未设置时会拿当前 git 分支名当 channel，本仓库构建分支是 `dev`，于是 `IS_PREVIEW` 取真、`VERSION` 退化成 `0.0.0-dev-<时间戳>` 预览占位，splash 和 `/who` 就会显示 `0.0.0-dev-...`（历史上反复出现的“开发版本号又不见了”就是这个原因）。
+- 正确构建命令（Bun 1.4.2，两个变量缺一不可）：
+
+  ```
+  cd packages/cli
+  OPENCODE_VERSION=2.0.32 OPENCODE_CHANNEL=latest bun run script/build.ts --target=win32-x64 --skip-web-ui
+  ```
+
+  产物路径：`packages/cli/dist/cli-windows-x64/bin/opencode.exe`。
+- 发布前先自检 `grep -a -c "0\.0\.0-dev-" <exe>` 必须为 `0`，再 `gh release upload <tag> <exe> --clobber`（`--outdir` 默认就是 `dist`，不要改动）。
+- 沙箱重置后 mise 的 bun 可能回退到 1.2.14；`packages/script` 会因 `packageManager` 不匹配直接报错，构建前用绝对路径 `/root/.local/share/mise/installs/bun/1.4.2/bin/bun` 或先确认 `bun --version` 为 1.4.2。
+
 ## Live TUI Testing
 
 - Run `bun run dev:live` from a development worktree to test its TUI against the currently elected `opencode` background server and live sessions.

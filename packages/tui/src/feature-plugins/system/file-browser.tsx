@@ -1,9 +1,10 @@
 /** @jsxImportSource @opentui/solid */
 import { mkdir, rename, rm, writeFile } from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
 import type { LocationRef } from "@opencode/client"
 import { Plugin } from "@opencode/plugin/tui"
-import type { KeymapCommand, PanelInput, Route } from "@opencode/plugin/tui/context"
+import type { DialogSelectOption, KeymapCommand, PanelInput, Route } from "@opencode/plugin/tui/context"
 import {
   getTreeSitterClient,
   MouseButton,
@@ -16,7 +17,7 @@ import { createEffect, createMemo, createResource, createSignal, For, Match, onC
 import { DialogHeader, DialogLayout } from "../../ui/dialog"
 import { useTheme, useThemes } from "../../context/theme"
 import { useConfig } from "../../config"
-import { detectExternalEditor, openFilePath } from "../../editor"
+import { desktopDirectory, detectExternalEditor, listDirectory, openFilePath, scanInstalledEditors } from "../../editor"
 import { errorMessage } from "../../util/error"
 import { filetype } from "../../util/filetype"
 import { stringWidth } from "../../util/string-width"
@@ -55,6 +56,23 @@ function decode(bytes: Uint8Array): PreviewState {
   if (bytes.subarray(0, BINARY_PROBE_BYTES).includes(0)) return { kind: "binary" }
   const slice = bytes.subarray(0, MAX_PREVIEW_BYTES)
   return { kind: "text", text: new TextDecoder().decode(slice), truncated: bytes.length > MAX_PREVIEW_BYTES }
+}
+
+// Tree-sitter reports character offsets, but the edit buffer addresses highlight ranges by display
+// column: wide glyphs occupy two cells, tabs expand to the buffer's tab width and newlines take none.
+// Building a prefix table of per-code-point widths keeps ranges aligned across CJK text, tabs and lines.
+function displayColumns(text: string, tabWidth: number) {
+  const columns = new Array<number>(text.length + 1)
+  let index = 0
+  let column = 0
+  for (const char of text) {
+    const width = char === "\t" ? tabWidth : stringWidth(char)
+    for (let offset = 0; offset < char.length; offset++) columns[index + offset] = column
+    column += width
+    index += char.length
+  }
+  columns[text.length] = column
+  return columns
 }
 
 function FileBrowser(props: {
@@ -324,11 +342,15 @@ function FileBrowser(props: {
     const result = await getTreeSitterClient().highlightOnce(content, language).catch(() => undefined)
     if (!result?.highlights || job !== highlightJob || element.isDestroyed) return
     element.clearAllHighlights()
+    const columns = displayColumns(content, element.editBuffer.getTabWidth())
     for (const [start, end, group] of result.highlights) {
       if (start === end) continue
       const styleId = style.getStyleId(group)
       if (styleId === null) continue
-      element.addHighlightByCharRange({ start, end, styleId })
+      const from = columns[Math.min(Math.max(start, 0), content.length)]!
+      const to = columns[Math.min(Math.max(end, 0), content.length)]!
+      if (from === undefined || to === undefined || from === to) continue
+      element.addHighlightByCharRange({ start: from, end: to, styleId })
     }
   }
   onCleanup(() => {
@@ -889,6 +911,8 @@ const EDITOR_CANDIDATES: readonly { command: string; label: string }[] = [
   { command: "code", label: "VS Code" },
   { command: "code-insiders", label: "VS Code Insiders" },
   { command: "cursor", label: "Cursor" },
+  { command: "trae", label: "Trae" },
+  { command: "trae-cn", label: "Trae CN" },
   { command: "windsurf", label: "Windsurf" },
   { command: "zed", label: "Zed" },
   { command: "subl", label: "Sublime Text" },
@@ -905,48 +929,106 @@ const EDITOR_CANDIDATES: readonly { command: string; label: string }[] = [
   { command: "notepad", label: "记事本" },
 ]
 
+type EditorFileChoice = { kind: "up" } | { kind: "directory"; path: string } | { kind: "file"; path: string }
+
+/**
+ * Walks the local filesystem one directory level at a time so the user can pick an editor binary or a
+ * desktop shortcut (`.lnk`) by hand. Returns the absolute path, or undefined when the user cancels.
+ */
+async function pickEditorFile(context: Plugin.Context, startDirectory: string) {
+  let directory = startDirectory
+  for (;;) {
+    let items
+    try {
+      items = listDirectory(directory)
+    } catch {
+      context.ui.toast.show({ variant: "error", title: "文件", message: `无法读取目录：${directory}` })
+      return undefined
+    }
+    const parent = parentDirectory(directory)
+    const options: DialogSelectOption<EditorFileChoice>[] = [
+      ...(parent
+        ? [{ title: "⬆ 返回上级目录", value: { kind: "up" } as EditorFileChoice, description: parent }]
+        : []),
+      ...items.map(
+        (item): DialogSelectOption<EditorFileChoice> =>
+          item.directory
+            ? { title: `${item.name}/`, value: { kind: "directory", path: item.path }, description: item.path }
+            : { title: item.name, value: { kind: "file", path: item.path }, description: item.path },
+      ),
+    ]
+    const picked = await context.ui.dialog.select<EditorFileChoice>({
+      title: "浏览选择编辑器文件",
+      placeholder: `浏览：${directory}`,
+      options,
+    })
+    if (picked === undefined) return undefined
+    if (picked.kind === "up") {
+      directory = parent
+      continue
+    }
+    if (picked.kind === "directory") {
+      directory = picked.path
+      continue
+    }
+    return picked.path
+  }
+}
+
 function Commands(props: { context: Plugin.Context }) {
   const config = useConfig()
-  // Scans the PATH for known editors so the user can pick one instead of typing a command.
-  const scanEditors = () => {
-    const found: { title: string; value: string; footer: string; description?: string }[] = []
-    const seen = new Set<string>()
-    const add = (value: string, label: string) => {
-      const binary = value.trim().split(" ")[0]!
-      if (!binary || seen.has(binary) || !Bun.which(binary)) return
-      seen.add(binary)
-      found.push({ title: value, value, footer: label, description: Bun.which(binary) ?? undefined })
-    }
-    for (const value of [process.env.VISUAL, process.env.EDITOR]) {
-      if (value?.trim()) add(value, "环境变量")
-    }
-    for (const item of EDITOR_CANDIDATES) add(item.command, item.label)
-    return found
-  }
   const setEditor = async () => {
     const CUSTOM = "\u0000custom"
+    const BROWSE = "\u0000browse"
     const requested = config.data.editor?.trim()
-    const detected = scanEditors()
-    const options = [
-      { title: "手动输入…", value: CUSTOM, footer: "自定义", description: "输入任意编辑器命令，例如 code、nvim" },
+    const seen = new Set<string>()
+    const detected: DialogSelectOption<string>[] = []
+    const add = (value: string, label: string, description?: string) => {
+      if (!value || seen.has(value)) return
+      seen.add(value)
+      detected.push({ title: value, value, footer: label, description })
+    }
+    // $VISUAL/$EDITOR and editors on PATH first, then editors found off-PATH by scanning install
+    // directories and the desktop, so GUI-only installs and `.lnk` shortcuts stay selectable.
+    for (const value of [process.env.VISUAL, process.env.EDITOR]) {
+      const resolved = value?.trim() && Bun.which(value.trim().split(" ")[0]!)
+      if (resolved) add(value!.trim(), "环境变量", resolved)
+    }
+    for (const item of EDITOR_CANDIDATES) {
+      const resolved = Bun.which(item.command)
+      if (resolved) add(item.command, item.label, resolved)
+    }
+    for (const item of scanInstalledEditors()) add(item.command, item.label, item.command)
+    const options: DialogSelectOption<string>[] = [
+      {
+        title: "浏览文件…",
+        value: BROWSE,
+        footer: "选择 .exe / .lnk",
+        description: "浏览磁盘，选择编辑器可执行文件或桌面快捷方式",
+      },
+      { title: "手动输入…", value: CUSTOM, footer: "自定义", description: "输入任意编辑器命令或含空格的完整路径" },
       ...detected.map((item) =>
         // Mark the editor currently in use so it is highlighted when the dialog opens.
-        requested && item.value.split(" ")[0] === requested.split(" ")[0] ? { ...item, footer: `${item.footer}（当前）` } : item,
+        requested === item.value ? { ...item, footer: `${item.footer}（当前）` } : item,
       ),
       { title: "使用系统默认程序", value: "", footer: "清空设置", description: "不指定编辑器，交给系统默认程序打开" },
     ]
     const picked = await props.context.ui.dialog.select<string>({
       title: "自定义外部编辑器",
-      placeholder: "选择或搜索已安装的编辑器",
+      placeholder: "选择、浏览或搜索编辑器",
       options,
       current: requested ?? "",
     })
     if (picked === undefined) return
     let editor = picked
-    if (picked === CUSTOM) {
+    if (picked === BROWSE) {
+      const path = await pickEditorFile(props.context, desktopDirectory() ?? os.homedir())
+      if (!path) return
+      editor = path
+    } else if (picked === CUSTOM) {
       const typed = await props.context.ui.dialog.prompt({
         title: "自定义外部编辑器",
-        description: "输入打开文件时使用的编辑器命令（例如 code、nvim、notepad++）。",
+        description: "输入打开文件时使用的编辑器命令或完整路径（例如 code、nvim、C:\\Program Files\\...\\Code.exe）。",
         value: requested ?? "",
         placeholder: "code",
       })
