@@ -23,7 +23,7 @@ import { usePromptRef } from "../../context/prompt"
 import { useSessionTabs } from "../../context/session-tabs"
 import { useEvent } from "../../context/event"
 import { editorSelectionKey, useEditorContext, type EditorSelection } from "../../context/editor"
-import { normalizePromptContent, openEditor } from "../../editor"
+import { detectExternalEditor, normalizePromptContent, openEditor } from "../../editor"
 import { useExit } from "../../context/exit"
 import { promptOffsetWidth } from "../../prompt/display"
 import { expandPromptInputPastedText, realignPromptInputMentions } from "../../prompt/mention"
@@ -558,6 +558,7 @@ export function Prompt(props: PromptProps) {
           const content = await openEditor({
             renderer,
             value,
+            editor: config.editor || detectExternalEditor(),
             cwd:
               (data.location.info()?.project.directory === "/" ? undefined : data.location.info()?.project.directory) ||
               data.location.default().directory ||

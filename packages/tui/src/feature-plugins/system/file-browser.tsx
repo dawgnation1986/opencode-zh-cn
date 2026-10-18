@@ -4,13 +4,19 @@ import path from "node:path"
 import type { LocationRef } from "@opencode/client"
 import { Plugin } from "@opencode/plugin/tui"
 import type { KeymapCommand, PanelInput, Route } from "@opencode/plugin/tui/context"
-import { MouseButton, TextAttributes, type ScrollBoxRenderable, type TextareaRenderable } from "@opentui/core"
+import {
+  getTreeSitterClient,
+  MouseButton,
+  TextAttributes,
+  type ScrollBoxRenderable,
+  type TextareaRenderable,
+} from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createMemo, createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { DialogHeader, DialogLayout } from "../../ui/dialog"
 import { useTheme, useThemes } from "../../context/theme"
 import { useConfig } from "../../config"
-import { openFilePath } from "../../editor"
+import { detectExternalEditor, openFilePath } from "../../editor"
 import { errorMessage } from "../../util/error"
 import { filetype } from "../../util/filetype"
 import { stringWidth } from "../../util/string-width"
@@ -296,6 +302,45 @@ function FileBrowser(props: {
     void openFile()
     setSearch(undefined)
   })
+
+  // Live syntax highlighting for the built-in editor: re-tokenize the buffer and apply
+  // per-range styles. TextareaRenderable has no native highlighting, so we drive it here.
+  let highlightTimer: ReturnType<typeof setTimeout> | undefined
+  let highlightJob = 0
+  const scheduleHighlight = () => {
+    if (!editing()) return
+    if (highlightTimer) clearTimeout(highlightTimer)
+    highlightTimer = setTimeout(() => void applyHighlight(), 120)
+  }
+  const applyHighlight = async () => {
+    const element = textarea
+    const path = openFile()
+    if (!element || element.isDestroyed || !path) return
+    const language = filetype(path)
+    const style = currentSyntax()
+    if (!language || !style) return
+    const content = element.plainText
+    const job = (highlightJob += 1)
+    const result = await getTreeSitterClient().highlightOnce(content, language).catch(() => undefined)
+    if (!result?.highlights || job !== highlightJob || element.isDestroyed) return
+    element.clearAllHighlights()
+    for (const [start, end, group] of result.highlights) {
+      if (start === end) continue
+      const styleId = style.getStyleId(group)
+      if (styleId === null) continue
+      element.addHighlightByCharRange({ start, end, styleId })
+    }
+  }
+  onCleanup(() => {
+    if (highlightTimer) clearTimeout(highlightTimer)
+  })
+
+  const clearHighlight = () => {
+    if (highlightTimer) clearTimeout(highlightTimer)
+    highlightJob += 1
+    if (textarea && !textarea.isDestroyed) textarea.clearAllHighlights()
+  }
+
   createEffect(() => {
     if (!editing()) return
     // Re-focus the editor whenever it starts or the panel regains focus after a click elsewhere.
@@ -303,6 +348,7 @@ function FileBrowser(props: {
     requestAnimationFrame(() => {
       if (textarea && !textarea.isDestroyed) textarea.focus()
     })
+    scheduleHighlight()
   })
 
   const scrollSelectedIntoView = () => {
@@ -385,14 +431,14 @@ function FileBrowser(props: {
       path,
       renderer: props.context.renderer,
       cwd: location().directory,
-      editor: config.data.editor,
+      editor: config.data.editor || detectExternalEditor(),
     })
       .then((mode) => {
         if (mode !== "system") return
         props.context.ui.toast.show({
           variant: "info",
           title: "文件",
-          message: `已用系统默认程序打开 ${entryName(path)}（可在 Ctrl+P 运行“设置外部编辑器”，或设置 $EDITOR）`,
+          message: `已用系统默认程序打开 ${entryName(path)}（可在 Ctrl+P 运行“设置外部编辑器”或输入 /set-editor）`,
         })
       })
       .catch((error) =>
@@ -429,7 +475,10 @@ function FileBrowser(props: {
     setEditing(true)
   }
 
-  const cancelEdit = () => setEditing(false)
+  const cancelEdit = () => {
+    clearHighlight()
+    setEditing(false)
+  }
 
   const newline = () => {
     const element = textarea
@@ -447,6 +496,7 @@ function FileBrowser(props: {
         path,
         payload: new TextEncoder().encode(element.plainText),
       })
+      clearHighlight()
       setEditing(false)
       props.context.ui.toast.show({ variant: "success", title: "文件", message: `已保存 ${entryName(path)}` })
       void refetchPreview()
@@ -546,7 +596,15 @@ function FileBrowser(props: {
   const shortcut = (id: string) => props.context.keymap.shortcuts(id)[0] ?? ""
 
   return (
-    <box width="100%" height="100%" flexDirection="column" backgroundColor={surface()}>
+    <box
+      width="100%"
+      height="100%"
+      flexDirection="column"
+      backgroundColor={surface()}
+      onMouseDown={() => {
+        if (editing() && textarea && !textarea.isDestroyed) textarea.focus()
+      }}
+    >
       <box
         id="files-header"
         flexShrink={0}
@@ -581,6 +639,8 @@ function FileBrowser(props: {
                     wrapMode="none"
                     initialValue={initialText()}
                     placeholder="在此编辑文件内容，Ctrl+S 保存，ESC 退出"
+                    syntaxStyle={currentSyntax()}
+                    onContentChange={() => scheduleHighlight()}
                     textColor={theme.text.formfield.base}
                     focusedTextColor={theme.text.formfield.base}
                     backgroundColor={surface()}
@@ -825,26 +885,84 @@ function FilesHelpDialog(props: { context: Plugin.Context }) {
   )
 }
 
+const EDITOR_CANDIDATES: readonly { command: string; label: string }[] = [
+  { command: "code", label: "VS Code" },
+  { command: "code-insiders", label: "VS Code Insiders" },
+  { command: "cursor", label: "Cursor" },
+  { command: "windsurf", label: "Windsurf" },
+  { command: "zed", label: "Zed" },
+  { command: "subl", label: "Sublime Text" },
+  { command: "notepad++", label: "Notepad++" },
+  { command: "nvim", label: "Neovim" },
+  { command: "vim", label: "Vim" },
+  { command: "hx", label: "Helix" },
+  { command: "micro", label: "Micro" },
+  { command: "emacs", label: "Emacs" },
+  { command: "nano", label: "nano" },
+  { command: "idea", label: "IntelliJ IDEA" },
+  { command: "webstorm", label: "WebStorm" },
+  { command: "pycharm", label: "PyCharm" },
+  { command: "notepad", label: "记事本" },
+]
+
 function Commands(props: { context: Plugin.Context }) {
   const config = useConfig()
+  // Scans the PATH for known editors so the user can pick one instead of typing a command.
+  const scanEditors = () => {
+    const found: { title: string; value: string; footer: string; description?: string }[] = []
+    const seen = new Set<string>()
+    const add = (value: string, label: string) => {
+      const binary = value.trim().split(" ")[0]!
+      if (!binary || seen.has(binary) || !Bun.which(binary)) return
+      seen.add(binary)
+      found.push({ title: value, value, footer: label, description: Bun.which(binary) ?? undefined })
+    }
+    for (const value of [process.env.VISUAL, process.env.EDITOR]) {
+      if (value?.trim()) add(value, "环境变量")
+    }
+    for (const item of EDITOR_CANDIDATES) add(item.command, item.label)
+    return found
+  }
   const setEditor = async () => {
-    const value = await props.context.ui.dialog.prompt({
-      title: "设置外部编辑器",
-      description: "输入打开文件时使用的编辑器命令（例如 code、nvim、notepad++）。留空则使用系统默认程序。",
-      value: config.data.editor ?? "",
-      placeholder: "code",
+    const CUSTOM = "\u0000custom"
+    const requested = config.data.editor?.trim()
+    const detected = scanEditors()
+    const options = [
+      { title: "手动输入…", value: CUSTOM, footer: "自定义", description: "输入任意编辑器命令，例如 code、nvim" },
+      ...detected.map((item) =>
+        // Mark the editor currently in use so it is highlighted when the dialog opens.
+        requested && item.value.split(" ")[0] === requested.split(" ")[0] ? { ...item, footer: `${item.footer}（当前）` } : item,
+      ),
+      { title: "使用系统默认程序", value: "", footer: "清空设置", description: "不指定编辑器，交给系统默认程序打开" },
+    ]
+    const picked = await props.context.ui.dialog.select<string>({
+      title: "自定义外部编辑器",
+      placeholder: "选择或搜索已安装的编辑器",
+      options,
+      current: requested ?? "",
     })
-    if (value === undefined) return
-    const editor = value.trim()
+    if (picked === undefined) return
+    let editor = picked
+    if (picked === CUSTOM) {
+      const typed = await props.context.ui.dialog.prompt({
+        title: "自定义外部编辑器",
+        description: "输入打开文件时使用的编辑器命令（例如 code、nvim、notepad++）。",
+        value: requested ?? "",
+        placeholder: "code",
+      })
+      if (typed === undefined) return
+      editor = typed
+    }
+    const value = editor.trim()
     await config
       .update((draft) => {
-        draft.editor = editor || undefined
+        draft.editor = value || undefined
       })
       .then(() =>
         props.context.ui.toast.show({
           variant: "success",
           title: "文件",
-          message: editor ? `外部编辑器已设为“${editor}”` : "已改回系统默认程序",
+          message: value ? `外部编辑器已设为“${value}”` : "已改回系统默认程序",
         }),
       )
       .catch(() =>
