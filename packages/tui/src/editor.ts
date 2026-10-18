@@ -11,10 +11,22 @@ export { normalizePromptContent } from "./prompt/content"
 
 type EditorStdio = "inherit" | "pipe" | "ignore" | number | Stream
 
-/** Opens an existing file path in the user's external editor without copying it through a temp buffer. */
-export async function openFilePath(input: { path: string; renderer: CliRenderer; cwd?: string }) {
+/**
+ * Opens an existing file path in the user's external editor without copying it through a temp buffer.
+ * Without a configured editor it falls back to the platform default application, so external editing
+ * works out of the box; the returned mode tells the caller which path was taken.
+ */
+export async function openFilePath(input: {
+  path: string
+  renderer: CliRenderer
+  cwd?: string
+}): Promise<"editor" | "system"> {
   const editor = process.env.VISUAL || process.env.EDITOR
-  if (!editor) throw new Error("Set $VISUAL or $EDITOR to open an external editor")
+  // Nothing to suspend for a detached default application: hand the file over and keep the TUI running.
+  if (!editor) {
+    await openWithSystem(input.path, input.cwd)
+    return "system"
+  }
   input.renderer.suspend()
   input.renderer.currentRenderBuffer.clear()
   try {
@@ -36,6 +48,28 @@ export async function openFilePath(input: { path: string; renderer: CliRenderer;
     input.renderer.resume()
     input.renderer.requestRender()
   }
+  return "editor"
+}
+
+/**
+ * Launches the file with the platform default handler in a detached process, so the TUI regains
+ * control immediately. Resolves once the process has spawned and only rejects when it cannot start.
+ */
+function openWithSystem(target: string, cwd?: string) {
+  const command = process.platform === "win32" ? "cmd" : process.platform === "darwin" ? "open" : "xdg-open"
+  const args = process.platform === "win32" ? ["/c", "start", "", target] : [target]
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: cwd && existsSync(cwd) ? cwd : process.cwd(),
+      stdio: "ignore",
+      detached: true,
+    })
+    child.on("error", reject)
+    child.on("spawn", () => {
+      child.unref()
+      resolve()
+    })
+  })
 }
 
 export async function openEditor(input: { value: string; renderer: CliRenderer; cwd?: string; stdin?: EditorStdio }) {

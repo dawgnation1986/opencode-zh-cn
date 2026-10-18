@@ -2,9 +2,9 @@
 import type { LocationRef } from "@opencode/client"
 import { Plugin } from "@opencode/plugin/tui"
 import type { KeymapCommand, PanelInput, Route } from "@opencode/plugin/tui/context"
-import { MouseButton, TextAttributes, type ScrollBoxRenderable } from "@opentui/core"
+import { MouseButton, TextAttributes, type ScrollBoxRenderable, type TextareaRenderable } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
-import { createEffect, createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { useTheme } from "../../context/theme"
 import { openFilePath } from "../../editor"
 import { errorMessage } from "../../util/error"
@@ -53,6 +53,9 @@ function FileBrowser(props: {
   const [dir, setDir] = createSignal("")
   const [openFile, setOpenFile] = createSignal<string>()
   const [selected, setSelected] = createSignal(0)
+  const [editing, setEditing] = createSignal(false)
+  const [saving, setSaving] = createSignal(false)
+  let textarea: TextareaRenderable | undefined
   let scroll: ScrollBoxRenderable | undefined
 
   const location = createMemo<LocationRef>(() => {
@@ -168,15 +171,82 @@ function FileBrowser(props: {
   const edit = () => {
     const path = editablePath()
     if (!path) return
-    void openFilePath({ path, renderer: props.context.renderer, cwd: location().directory }).catch((error) =>
-      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) }),
-    )
+    void openFilePath({ path, renderer: props.context.renderer, cwd: location().directory })
+      .then((mode) => {
+        if (mode !== "system") return
+        props.context.ui.toast.show({
+          variant: "info",
+          title: "文件",
+          message: `已用系统默认程序打开 ${entryName(path)}（设置 EDITOR 环境变量可指定编辑器）`,
+        })
+      })
+      .catch((error) =>
+        props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) }),
+      )
+  }
+
+  const initialText = () => {
+    const state = previewState()
+    return state.kind === "text" ? state.text : ""
+  }
+
+  // In-place editing only makes sense for a fully loaded text file: binaries and
+  // truncated previews would be written back incomplete.
+  const startEdit = () => {
+    if (!openFile()) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "请先打开一个文件再进行编辑" })
+      return
+    }
+    const state = previewState()
+    if (state.kind === "loading") return
+    if (state.kind === "binary") {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "二进制文件无法在内部编辑" })
+      return
+    }
+    if (state.kind === "text" && state.truncated) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "文件过大，请在外部编辑器中打开" })
+      return
+    }
+    if (state.kind === "error") {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: "无法读取该文件" })
+      return
+    }
+    setEditing(true)
+  }
+
+  const cancelEdit = () => setEditing(false)
+
+  const newline = () => {
+    const element = textarea
+    if (element && !element.isDestroyed) element.newLine()
+  }
+
+  const save = async () => {
+    const path = openFile()
+    const element = textarea
+    if (!path || !element || element.isDestroyed || saving()) return
+    setSaving(true)
+    try {
+      await props.context.client.file.write({
+        location: location(),
+        path,
+        payload: new TextEncoder().encode(element.plainText),
+      })
+      setEditing(false)
+      props.context.ui.toast.show({ variant: "success", title: "文件", message: `已保存 ${entryName(path)}` })
+      void refetchPreview()
+    } catch (error) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const commands: KeymapCommand[] = [
     { id: "files.close", title: "关闭文件浏览器", group: "文件", run: close },
     { id: "files.parent", title: "返回上一级", group: "文件", run: back },
-    { id: "files.edit", title: "用外部编辑器打开", group: "文件", run: edit },
+    { id: "files.edit", title: "在内部编辑", group: "文件", run: startEdit },
+    { id: "files.external", title: "用外部编辑器打开", group: "文件", run: edit },
     { id: "files.up", title: "向上移动文件选择", group: "文件", run: () => move(-1) },
     { id: "files.down", title: "向下移动文件选择", group: "文件", run: () => move(1) },
     { id: "files.page_up", title: "向上翻页文件列表", group: "文件", run: () => page(-1) },
@@ -203,7 +273,27 @@ function FileBrowser(props: {
     },
   ]
 
-  props.context.keymap.layer(() => ({ commands }))
+  // Listing/view bindings step aside while the editor owns the keys.
+  props.context.keymap.layer(() => ({ enabled: () => !editing(), commands }))
+
+  // Editing runs in its own input mode so the base layer's keys (and the session
+  // interrupt bound to ESC) cannot fire while typing in the textarea.
+  props.context.keymap.layer(() => ({
+    mode: "files-edit",
+    enabled: () => editing(),
+    priority: 1,
+    commands: [
+      { id: "files.save", title: "保存当前文件", group: "文件", run: () => void save() },
+      { bind: "return", title: "插入换行", group: "文件", run: newline },
+      { bind: "escape", title: "退出编辑", group: "文件", run: cancelEdit },
+    ],
+  }))
+
+  createEffect(() => {
+    if (!editing()) return
+    const popMode = props.context.keymap.mode.push("files-edit")
+    onCleanup(popMode)
+  })
 
   const shortcut = (id: string) => props.context.keymap.shortcuts(id)[0] ?? ""
 
@@ -226,46 +316,69 @@ function FileBrowser(props: {
           {pathLabel()}
         </text>
         <text fg={theme.text.muted} flexShrink={0} wrapMode="none">
-          {openFile() ? "预览" : `${rows().length} 项`}
+          {editing() ? (saving() ? "保存中…" : "编辑中") : openFile() ? "预览" : `${rows().length} 项`}
         </text>
       </box>
       <box flexGrow={1} minHeight={0}>
         <Switch>
           <Match when={openFile()}>
-            <scrollbox
-              id="files-preview"
-              ref={(element: ScrollBoxRenderable) => (scroll = element)}
-              flexGrow={1}
-              minHeight={0}
-              verticalScrollbarOptions={{ visible: false }}
-              horizontalScrollbarOptions={{ visible: false }}
-            >
-              <box paddingLeft={2} paddingRight={1} paddingBottom={1}>
-                <Switch>
-                  <Match when={previewState().kind === "loading"}>
-                    <text fg={theme.text.muted}>正在读取…</text>
-                  </Match>
-                  <Match when={previewState().kind === "error"}>
-                    <text fg={theme.text.feedback.error.base}>无法读取该文件。</text>
-                  </Match>
-                  <Match when={previewState().kind === "binary"}>
-                    <text fg={theme.text.muted}>二进制文件，无法以文本预览。</text>
-                  </Match>
-                  <Match when={previewState().kind === "empty"}>
-                    <text fg={theme.text.muted}>（空文件）</text>
-                  </Match>
-                  <Match when={previewState().kind === "text"}>
-                    <text wrapMode="char" selectable={false}>
-                      {(() => {
-                        const state = previewState()
-                        if (state.kind !== "text") return ""
-                        return state.text + (state.truncated ? "\n…（文件过大，已截断预览）" : "")
-                      })()}
-                    </text>
-                  </Match>
-                </Switch>
-              </box>
-            </scrollbox>
+            <Switch>
+              <Match when={editing()}>
+                <box flexGrow={1} minHeight={0} paddingLeft={2} paddingRight={1}>
+                  <textarea
+                    ref={(element: TextareaRenderable) => (textarea = element)}
+                    flexGrow={1}
+                    minHeight={1}
+                    width="100%"
+                    wrapMode="none"
+                    initialValue={initialText()}
+                    placeholder="在此编辑文件内容，Ctrl+S 保存，ESC 退出"
+                    textColor={theme.text.formfield.base}
+                    focusedTextColor={theme.text.formfield.base}
+                    backgroundColor={surface()}
+                    focusedBackgroundColor={theme.background.formfield.base}
+                    cursorColor={theme.text.base}
+                    focused
+                  />
+                </box>
+              </Match>
+              <Match when={!editing()}>
+                <scrollbox
+                  id="files-preview"
+                  ref={(element: ScrollBoxRenderable) => (scroll = element)}
+                  flexGrow={1}
+                  minHeight={0}
+                  verticalScrollbarOptions={{ visible: false }}
+                  horizontalScrollbarOptions={{ visible: false }}
+                >
+                  <box paddingLeft={2} paddingRight={1} paddingBottom={1}>
+                    <Switch>
+                      <Match when={previewState().kind === "loading"}>
+                        <text fg={theme.text.muted}>正在读取…</text>
+                      </Match>
+                      <Match when={previewState().kind === "error"}>
+                        <text fg={theme.text.feedback.error.base}>无法读取该文件。</text>
+                      </Match>
+                      <Match when={previewState().kind === "binary"}>
+                        <text fg={theme.text.muted}>二进制文件，无法以文本预览。</text>
+                      </Match>
+                      <Match when={previewState().kind === "empty"}>
+                        <text fg={theme.text.muted}>（空文件）</text>
+                      </Match>
+                      <Match when={previewState().kind === "text"}>
+                        <text wrapMode="char" selectable={false}>
+                          {(() => {
+                            const state = previewState()
+                            if (state.kind !== "text") return ""
+                            return state.text + (state.truncated ? "\n…（文件过大，已截断预览）" : "")
+                          })()}
+                        </text>
+                      </Match>
+                    </Switch>
+                  </box>
+                </scrollbox>
+              </Match>
+            </Switch>
           </Match>
           <Match when={!openFile()}>
             <scrollbox
@@ -341,7 +454,9 @@ function FileBrowser(props: {
         backgroundColor={surface()}
       >
         <text fg={theme.text.muted} flexGrow={1} minWidth={0} wrapMode="none" truncate selectable={false}>
-          {`${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.edit")} 编辑  ${shortcut("files.close")} 关闭`}
+          {editing()
+            ? `${shortcut("files.save")} 保存  ESC 退出编辑`
+            : `${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.edit")} 编辑  ${shortcut("files.external")} 外部  ${shortcut("files.close")} 关闭`}
         </text>
       </box>
     </box>

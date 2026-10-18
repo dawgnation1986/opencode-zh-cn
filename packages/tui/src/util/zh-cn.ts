@@ -2,7 +2,7 @@ export const ZH_CN_RELEASE_REPO = "dawgnation1986/opencode-zh-cn"
 export const ZH_CN_RELEASES_URL = `https://github.com/${ZH_CN_RELEASE_REPO}/releases`
 export const ZH_CN_LATEST_API = `https://api.github.com/repos/${ZH_CN_RELEASE_REPO}/releases/latest`
 
-export const ZH_CN_FLAVOR = "zh-cn-v1.1.1"
+export const ZH_CN_FLAVOR = "zh-cn-v1.1.2"
 export const ZH_CN_BASE = "OpenCode 2.0（官方包版本 2.0.32）"
 export const ZH_CN_UPSTREAM = "63c1a27（2026-10-17）"
 
