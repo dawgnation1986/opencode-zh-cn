@@ -64,6 +64,7 @@ import { DialogModel } from "./component/dialog-model"
 import { useConnected } from "./component/use-connected"
 import { DialogMcp } from "./component/dialog-mcp"
 import { DialogStatus } from "./component/dialog-status"
+import { DialogWho } from "./component/dialog-who"
 import { DialogConfig } from "./component/dialog-config"
 import { DialogDebug } from "./component/dialog-debug"
 import { DialogPair } from "./component/dialog-pair"
@@ -1013,6 +1014,15 @@ function App() {
         slash: { name: "status" },
         run: () => {
           dialog.replace(() => <DialogStatus />)
+        },
+        category: "System",
+      },
+      {
+        name: "opencode.who",
+        title: "查看版本信息",
+        slash: { name: "who" },
+        run: () => {
+          dialog.replace(() => <DialogWho version={app.version} />)
         },
         category: "System",
       },
