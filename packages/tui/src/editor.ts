@@ -20,8 +20,10 @@ export async function openFilePath(input: {
   path: string
   renderer: CliRenderer
   cwd?: string
+  /** Explicit editor command from config; falls back to $VISUAL/$EDITOR when absent. */
+  editor?: string
 }): Promise<"editor" | "system"> {
-  const editor = process.env.VISUAL || process.env.EDITOR
+  const editor = input.editor?.trim() || process.env.VISUAL || process.env.EDITOR
   // Nothing to suspend for a detached default application: hand the file over and keep the TUI running.
   if (!editor) {
     await openWithSystem(input.path, input.cwd)

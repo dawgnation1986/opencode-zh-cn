@@ -1,13 +1,18 @@
 /** @jsxImportSource @opentui/solid */
+import { mkdir, rename, rm, writeFile } from "node:fs/promises"
+import path from "node:path"
 import type { LocationRef } from "@opencode/client"
 import { Plugin } from "@opencode/plugin/tui"
 import type { KeymapCommand, PanelInput, Route } from "@opencode/plugin/tui/context"
 import { MouseButton, TextAttributes, type ScrollBoxRenderable, type TextareaRenderable } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createMemo, createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
-import { useTheme } from "../../context/theme"
+import { DialogHeader, DialogLayout } from "../../ui/dialog"
+import { useTheme, useThemes } from "../../context/theme"
+import { useConfig } from "../../config"
 import { openFilePath } from "../../editor"
 import { errorMessage } from "../../util/error"
+import { filetype } from "../../util/filetype"
 import { stringWidth } from "../../util/string-width"
 
 const ROUTE = "files"
@@ -35,6 +40,10 @@ function parentDirectory(path: string) {
   return separator === -1 ? "" : trimmed.slice(0, separator)
 }
 
+function joinPath(directory: string, name: string) {
+  return directory === "" ? name : `${directory.replace(/[\\/]+$/, "")}/${name}`
+}
+
 function decode(bytes: Uint8Array): PreviewState {
   if (bytes.length === 0) return { kind: "empty" }
   if (bytes.subarray(0, BINARY_PROBE_BYTES).includes(0)) return { kind: "binary" }
@@ -49,12 +58,16 @@ function FileBrowser(props: {
   onClose: () => void
 }) {
   const theme = useTheme()
+  const currentSyntax = useThemes().currentSyntax
+  const config = useConfig()
   const dimensions = useTerminalDimensions()
   const [dir, setDir] = createSignal("")
   const [openFile, setOpenFile] = createSignal<string>()
   const [selected, setSelected] = createSignal(0)
   const [editing, setEditing] = createSignal(false)
   const [saving, setSaving] = createSignal(false)
+  const [search, setSearch] = createSignal<string>()
+  const [matchIndex, setMatchIndex] = createSignal(0)
   let textarea: TextareaRenderable | undefined
   let scroll: ScrollBoxRenderable | undefined
 
@@ -84,6 +97,190 @@ function FileBrowser(props: {
   }
 
   const pathLabel = () => openFile() ?? (dir() === "" ? "项目根目录" : dir())
+  const previewText = () => {
+    const state = previewState()
+    return state.kind === "text" ? state.text : ""
+  }
+  const previewTruncated = () => {
+    const state = previewState()
+    return state.kind === "text" && state.truncated
+  }
+
+  // The previewed file wins; otherwise the highlighted row is the active target.
+  const activeEntry = (): { path: string; isDirectory: boolean } | undefined => {
+    const previewed = openFile()
+    if (previewed) return { path: previewed, isDirectory: false }
+    const entry = rows()[selected()]
+    if (!entry) return undefined
+    return { path: entry.path, isDirectory: entry.type === "directory" }
+  }
+
+  const absolutePath = (target: string) => path.resolve(location().directory, target)
+
+  // Line numbers (0-based) in the previewed file that contain the current search term.
+  const matchLines = createMemo(() => {
+    const query = search()?.toLowerCase()
+    if (!query) return []
+    return previewText()
+      .split("\n")
+      .flatMap((line, index) => (line.toLowerCase().includes(query) ? [index] : []))
+  })
+
+  const scrollToLine = (line: number) => {
+    if (scroll && !scroll.isDestroyed) scroll.scrollTo(Math.max(0, line))
+  }
+
+  // A dialog steals focus, and a click outside can blur the panel; restore both on demand.
+  const refocus = () => {
+    props.panel?.focus()
+    requestAnimationFrame(() => {
+      if (editing() && textarea && !textarea.isDestroyed) textarea.focus()
+    })
+  }
+
+  const findInFile = async () => {
+    if (!openFile()) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "请先打开一个文件再进行搜索" })
+      return
+    }
+    const query = await props.context.ui.dialog.prompt({ title: "在文件中搜索", placeholder: "输入要查找的内容" })
+    refocus()
+    if (!query) return
+    setSearch(query)
+    setMatchIndex(0)
+    requestAnimationFrame(() => {
+      const lines = matchLines()
+      if (lines.length === 0) {
+        setSearch(undefined)
+        props.context.ui.toast.show({ variant: "info", title: "文件", message: `未找到“${query}”` })
+        return
+      }
+      scrollToLine(lines[0]!)
+      props.context.ui.toast.show({
+        variant: "info",
+        title: "文件",
+        message: `共 ${lines.length} 处匹配，第 ${lines[0]! + 1} 行`,
+      })
+    })
+  }
+
+  const cycleMatch = (delta: number) => {
+    const lines = matchLines()
+    if (lines.length === 0) return
+    const next = (matchIndex() + delta + lines.length) % lines.length
+    setMatchIndex(next)
+    scrollToLine(lines[next]!)
+    props.context.ui.toast.show({
+      variant: "info",
+      title: "文件",
+      message: `第 ${next + 1}/${lines.length} 处匹配，第 ${lines[next]! + 1} 行`,
+    })
+  }
+
+  const gotoLine = async () => {
+    if (!openFile()) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "请先打开一个文件再跳转" })
+      return
+    }
+    const total = previewText().split("\n").length
+    const value = await props.context.ui.dialog.prompt({
+      title: "跳转到行",
+      description: `当前文件共 ${total} 行`,
+      placeholder: "输入行号",
+    })
+    refocus()
+    if (!value) return
+    const line = Number.parseInt(value, 10)
+    if (!Number.isInteger(line) || line < 1) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: "行号无效" })
+      return
+    }
+    scrollToLine(line - 1)
+    props.context.ui.toast.show({ variant: "info", title: "文件", message: `已跳转到第 ${line} 行` })
+  }
+
+  const createFile = async () => {
+    const name = await props.context.ui.dialog.prompt({
+      title: "新建文件",
+      description: `位置：${dir() || "项目根目录"}`,
+      placeholder: "输入文件名，例如 index.ts",
+    })
+    refocus()
+    if (!name) return
+    try {
+      await writeFile(absolutePath(joinPath(dir(), name)), "")
+      props.context.ui.toast.show({ variant: "success", title: "文件", message: `已创建 ${name}` })
+      void refetch()
+    } catch (error) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) })
+    }
+  }
+
+  const createDirectory = async () => {
+    const name = await props.context.ui.dialog.prompt({
+      title: "新建目录",
+      description: `位置：${dir() || "项目根目录"}`,
+      placeholder: "输入目录名",
+    })
+    refocus()
+    if (!name) return
+    try {
+      await mkdir(absolutePath(joinPath(dir(), name)), { recursive: true })
+      props.context.ui.toast.show({ variant: "success", title: "文件", message: `已创建目录 ${name}` })
+      void refetch()
+    } catch (error) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) })
+    }
+  }
+
+  const renameEntry = async () => {
+    const target = activeEntry()
+    if (!target) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "请先选择一个文件或目录" })
+      return
+    }
+    const current = entryName(target.path)
+    const name = await props.context.ui.dialog.prompt({
+      title: "重命名",
+      description: target.path,
+      value: current,
+      placeholder: current,
+    })
+    refocus()
+    if (!name || name === current) return
+    try {
+      await rename(absolutePath(target.path), absolutePath(joinPath(parentDirectory(target.path), name)))
+      if (openFile() === target.path) setOpenFile(undefined)
+      props.context.ui.toast.show({ variant: "success", title: "文件", message: `已重命名为 ${name}` })
+      void refetch()
+    } catch (error) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) })
+    }
+  }
+
+  const deleteEntry = async () => {
+    const target = activeEntry()
+    if (!target) {
+      props.context.ui.toast.show({ variant: "info", title: "文件", message: "请先选择一个文件或目录" })
+      return
+    }
+    const name = entryName(target.path)
+    const confirmed = await props.context.ui.dialog.confirm({
+      title: "删除",
+      message: `确定删除${target.isDirectory ? "目录" : "文件"} “${name}” 吗？此操作不可撤销。`,
+      label: { confirm: "删除", cancel: "取消" },
+    })
+    refocus()
+    if (!confirmed) return
+    try {
+      await rm(absolutePath(target.path), { recursive: true, force: true })
+      if (openFile() === target.path) setOpenFile(undefined)
+      props.context.ui.toast.show({ variant: "success", title: "文件", message: `已删除 ${name}` })
+      void refetch()
+    } catch (error) {
+      props.context.ui.toast.show({ variant: "error", title: "文件", message: errorMessage(error) })
+    }
+  }
 
   createEffect(() => {
     // Every directory change starts the list at its first entry.
@@ -93,6 +290,19 @@ function FileBrowser(props: {
   createEffect(() => {
     const count = rows().length
     setSelected((current) => (count === 0 ? 0 : Math.min(current, count - 1)))
+  })
+  createEffect(() => {
+    // Opening a different file invalidates the previous search and matches.
+    void openFile()
+    setSearch(undefined)
+  })
+  createEffect(() => {
+    if (!editing()) return
+    // Re-focus the editor whenever it starts or the panel regains focus after a click elsewhere.
+    if (props.panel && !props.panel.focused) return
+    requestAnimationFrame(() => {
+      if (textarea && !textarea.isDestroyed) textarea.focus()
+    })
   })
 
   const scrollSelectedIntoView = () => {
@@ -171,13 +381,18 @@ function FileBrowser(props: {
   const edit = () => {
     const path = editablePath()
     if (!path) return
-    void openFilePath({ path, renderer: props.context.renderer, cwd: location().directory })
+    void openFilePath({
+      path,
+      renderer: props.context.renderer,
+      cwd: location().directory,
+      editor: config.data.editor,
+    })
       .then((mode) => {
         if (mode !== "system") return
         props.context.ui.toast.show({
           variant: "info",
           title: "文件",
-          message: `已用系统默认程序打开 ${entryName(path)}（设置 EDITOR 环境变量可指定编辑器）`,
+          message: `已用系统默认程序打开 ${entryName(path)}（可在 Ctrl+P 运行“设置外部编辑器”，或设置 $EDITOR）`,
         })
       })
       .catch((error) =>
@@ -242,6 +457,11 @@ function FileBrowser(props: {
     }
   }
 
+  const openHelp = () => {
+    props.context.ui.dialog.show(() => <FilesHelpDialog context={props.context} />)
+    props.context.ui.dialog.set({ size: "medium", centered: true })
+  }
+
   const commands: KeymapCommand[] = [
     { id: "files.close", title: "关闭文件浏览器", group: "文件", run: close },
     { id: "files.parent", title: "返回上一级", group: "文件", run: back },
@@ -271,6 +491,34 @@ function FileBrowser(props: {
         else void refetch()
       },
     },
+    { id: "files.search", title: "在文件中搜索内容", group: "文件", palette: true, run: () => void findInFile() },
+    {
+      id: "files.next_match",
+      title: "跳到下一个匹配",
+      group: "文件",
+      enabled: () => matchLines().length > 0,
+      run: () => cycleMatch(1),
+    },
+    {
+      id: "files.prev_match",
+      title: "跳到上一个匹配",
+      group: "文件",
+      enabled: () => matchLines().length > 0,
+      run: () => cycleMatch(-1),
+    },
+    { id: "files.goto", title: "跳转到指定行", group: "文件", palette: true, run: () => void gotoLine() },
+    { id: "files.new", title: "新建文件", group: "文件", palette: true, run: () => void createFile() },
+    {
+      id: "files.new_directory",
+      title: "新建目录",
+      group: "文件",
+      palette: true,
+      run: () => void createDirectory(),
+    },
+    { id: "files.rename", title: "重命名文件或目录", group: "文件", palette: true, run: () => void renameEntry() },
+    { id: "files.delete", title: "删除文件或目录", group: "文件", palette: true, run: () => void deleteEntry() },
+    { id: "files.help", title: "显示文件浏览器快捷键", group: "文件", run: openHelp },
+    { id: "files.open_external", title: "用默认编辑器打开文件", group: "文件", palette: true, run: edit },
   ]
 
   // Listing/view bindings step aside while the editor owns the keys.
@@ -366,13 +614,20 @@ function FileBrowser(props: {
                         <text fg={theme.text.muted}>（空文件）</text>
                       </Match>
                       <Match when={previewState().kind === "text"}>
-                        <text wrapMode="char" selectable={false}>
-                          {(() => {
-                            const state = previewState()
-                            if (state.kind !== "text") return ""
-                            return state.text + (state.truncated ? "\n…（文件过大，已截断预览）" : "")
-                          })()}
-                        </text>
+                        <box flexDirection="column" width="100%" gap={1}>
+                          <code
+                            width="100%"
+                            wrapMode="char"
+                            selectable={false}
+                            content={previewText()}
+                            filetype={filetype(openFile())}
+                            syntaxStyle={currentSyntax()}
+                            fg={theme.text.base}
+                          />
+                          <Show when={previewTruncated()}>
+                            <text fg={theme.text.muted}>…（文件过大，已截断预览）</text>
+                          </Show>
+                        </box>
                       </Match>
                     </Switch>
                   </box>
@@ -456,7 +711,7 @@ function FileBrowser(props: {
         <text fg={theme.text.muted} flexGrow={1} minWidth={0} wrapMode="none" truncate selectable={false}>
           {editing()
             ? `${shortcut("files.save")} 保存  ESC 退出编辑`
-            : `${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.edit")} 编辑  ${shortcut("files.external")} 外部  ${shortcut("files.close")} 关闭`}
+            : `${shortcut("files.select")} 打开  ${shortcut("files.parent")} 返回  ${shortcut("files.edit")} 编辑  ${shortcut("files.external")} 外部  ${shortcut("files.help")} 帮助  ${shortcut("files.close")} 关闭`}
         </text>
       </box>
     </box>
@@ -479,7 +734,124 @@ function FileBrowserRoute(props: {
   )
 }
 
+function FilesHelpDialog(props: { context: Plugin.Context }) {
+  const dimensions = useTerminalDimensions()
+  const theme = props.context.theme.surface("dialog")
+  const shortcut = (id: string) => props.context.keymap.shortcuts(id).join(" / ")
+  const groups = [
+    {
+      title: "浏览",
+      rows: [
+        { shortcut: shortcut("files.down"), label: "下移 / 上移选择" },
+        { shortcut: shortcut("files.home"), label: "跳到列表开头 / 结尾" },
+        { shortcut: shortcut("files.select"), label: "打开所选文件或目录" },
+        { shortcut: shortcut("files.parent"), label: "返回上一级" },
+        { shortcut: shortcut("files.refresh"), label: "刷新文件列表" },
+        { shortcut: shortcut("files.close"), label: "关闭文件浏览器" },
+      ],
+    },
+    {
+      title: "预览与搜索",
+      rows: [
+        { shortcut: shortcut("files.search"), label: "在文件中搜索内容" },
+        { shortcut: shortcut("files.next_match"), label: "下一个 / 上一个匹配" },
+        { shortcut: shortcut("files.goto"), label: "跳转到指定行" },
+      ],
+    },
+    {
+      title: "编辑",
+      rows: [
+        { shortcut: shortcut("files.edit"), label: "在 OpenCode 内部编辑" },
+        { shortcut: shortcut("files.save"), label: "保存（编辑模式）" },
+        { shortcut: shortcut("files.external"), label: "用外部编辑器打开" },
+        { shortcut: "/set-editor", label: "设置外部编辑器命令" },
+      ],
+    },
+    {
+      title: "文件操作",
+      rows: [
+        { shortcut: shortcut("files.new"), label: "新建文件" },
+        { shortcut: shortcut("files.new_directory"), label: "新建目录" },
+        { shortcut: shortcut("files.rename"), label: "重命名" },
+        { shortcut: shortcut("files.delete"), label: "删除" },
+      ],
+    },
+  ]
+
+  return (
+    <DialogLayout
+      header={
+        <DialogHeader title="文件浏览器快捷键" closeLabel="ESC 关闭" onClose={() => props.context.ui.dialog.clear()} />
+      }
+    >
+      <scrollbox
+        id="files-help-scroll"
+        focused
+        height={Math.max(
+          1,
+          Math.min(
+            dimensions().height - 6,
+            groups.reduce((height, group) => height + group.rows.length + 2, -1),
+          ),
+        )}
+        horizontalScrollbarOptions={{ visible: false }}
+        verticalScrollbarOptions={{ visible: false }}
+      >
+        <box gap={1}>
+          <For each={groups}>
+            {(group) => (
+              <box flexShrink={0}>
+                <text fg={theme.text.base} attributes={TextAttributes.BOLD}>
+                  {group.title}
+                </text>
+                <For each={group.rows}>
+                  {(row) => (
+                    <box flexDirection="row" gap={2}>
+                      <text fg={theme.text.base} width={17} flexShrink={0}>
+                        {row.shortcut || "未绑定"}
+                      </text>
+                      <text fg={theme.text.muted} flexGrow={1} minWidth={0}>
+                        {row.label}
+                      </text>
+                    </box>
+                  )}
+                </For>
+              </box>
+            )}
+          </For>
+        </box>
+      </scrollbox>
+    </DialogLayout>
+  )
+}
+
 function Commands(props: { context: Plugin.Context }) {
+  const config = useConfig()
+  const setEditor = async () => {
+    const value = await props.context.ui.dialog.prompt({
+      title: "设置外部编辑器",
+      description: "输入打开文件时使用的编辑器命令（例如 code、nvim、notepad++）。留空则使用系统默认程序。",
+      value: config.data.editor ?? "",
+      placeholder: "code",
+    })
+    if (value === undefined) return
+    const editor = value.trim()
+    await config
+      .update((draft) => {
+        draft.editor = editor || undefined
+      })
+      .then(() =>
+        props.context.ui.toast.show({
+          variant: "success",
+          title: "文件",
+          message: editor ? `外部编辑器已设为“${editor}”` : "已改回系统默认程序",
+        }),
+      )
+      .catch(() =>
+        props.context.ui.toast.show({ variant: "error", title: "文件", message: "保存外部编辑器设置失败" }),
+      )
+    props.context.ui.dialog.clear()
+  }
   props.context.keymap.layer(() => ({
     mode: "global",
     commands: [
@@ -518,6 +890,16 @@ function Commands(props: { context: Plugin.Context }) {
               returnRoute,
             },
           })
+        },
+      },
+      {
+        id: "files.set_editor",
+        title: "设置外部编辑器",
+        slash: { name: "set-editor" },
+        group: "文件",
+        palette: true,
+        run() {
+          void setEditor()
         },
       },
     ],

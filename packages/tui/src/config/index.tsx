@@ -149,6 +149,9 @@ export const Info = Schema.Struct({
       }),
     }),
   ).annotate({ description: "提示输入行为" }),
+  editor: Schema.optional(Schema.String).annotate({
+    description: "打开文件时使用的外部编辑器命令（如 code、nvim）；留空则使用 $VISUAL/$EDITOR 或系统默认程序",
+  }),
   session: Schema.optional(
     Schema.Struct({
       sidebar: Schema.optional(Schema.Literals(["auto", "hide"])).annotate({
