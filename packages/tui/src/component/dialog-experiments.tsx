@@ -17,8 +17,8 @@ type Experiment = {
 export const experiments: Experiment[] = [
   {
     id: "new-designs",
-    title: "New designs",
-    description: "Preview the new TUI designs",
+    title: "新设计",
+    description: "预览新的 TUI 设计",
   },
 ]
 
@@ -36,7 +36,7 @@ export function DialogExperiments() {
     experiments.map((experiment) => ({
       title: experiment.title,
       searchText: experiment.description,
-      footer: enabled(experiment) ? "on" : "off",
+      footer: enabled(experiment) ? "开启" : "关闭",
       value: experiment,
     })),
   )
@@ -58,29 +58,29 @@ export function DialogExperiments() {
 
   return (
     <DialogSelect
-      title="Experiments"
+      title="实验性功能"
       options={options()}
       renderFilter={experiments.length > 0}
       onMove={(option) => setSelected(option.value)}
       onSelect={(option) => void change(option.value)}
       emptyView={
         <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-          <text fg={theme.text.muted}>No experiments available</text>
+          <text fg={theme.text.muted}>暂无实验性功能</text>
         </box>
       }
-      footerHints={experiments.length > 0 && !newDesigns() ? [{ title: "change", label: "←/→" }] : []}
+      footerHints={experiments.length > 0 && !newDesigns() ? [{ title: "更改", label: "←/→" }] : []}
       bindings={
         experiments.length > 0
           ? [
               {
                 bind: "left",
-                title: "Previous value",
+                title: "上一个值",
                 group: "Experiments",
                 run: () => void change(),
               },
               {
                 bind: "right",
-                title: "Next value",
+                title: "下一个值",
                 group: "Experiments",
                 run: () => void change(),
               },

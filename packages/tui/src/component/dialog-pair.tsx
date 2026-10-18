@@ -44,12 +44,12 @@ export function DialogPair() {
       <box flexDirection={horizontal() ? "row" : "column"} alignItems={horizontal() ? "flex-start" : "center"} gap={2}>
         <box width={horizontal() ? 29 : "100%"} flexShrink={0} gap={1}>
           <text fg={theme.text.muted} wrapMode="word">
-            Open a link to connect. Links work once and expire in {value.minutes} minutes.
+            打开链接即可连接。链接仅可使用一次，将在 {value.minutes} 分钟后过期。
           </text>
           <Show when={value.localhost}>
             {(url) => (
               <box>
-                <text fg={theme.text.muted}>This device</text>
+                <text fg={theme.text.muted}>此设备</text>
                 <Link href={url()} fg={theme.text.base}>
                   {url()}
                 </Link>
@@ -57,7 +57,7 @@ export function DialogPair() {
             )}
           </Show>
           <box>
-            <text fg={theme.text.muted}>Links</text>
+            <text fg={theme.text.muted}>链接</text>
             <For each={value.links}>
               {(url) => (
                 <Link href={url} fg={theme.text.base}>
@@ -68,7 +68,7 @@ export function DialogPair() {
           </box>
           <Show when={value.loopback}>
             <text fg={theme.text.muted} wrapMode="word">
-              Run `opencode service set hostname 0.0.0.0` to access the service remotely.
+              运行 `opencode service set hostname 0.0.0.0` 以远程访问服务。
             </text>
           </Show>
         </box>
@@ -87,11 +87,11 @@ export function DialogPair() {
   }
 
   return (
-    <DialogLayout header={<DialogHeader title="Pair" />}>
+    <DialogLayout header={<DialogHeader title="配对" />}>
       <Show
         when={loadError()}
         fallback={
-          <Show when={info()} fallback={<text fg={theme.text.muted}>Loading server information…</text>}>
+          <Show when={info()} fallback={<text fg={theme.text.muted}>正在加载服务器信息…</text>}>
             <Show
               when={dimensions().height >= 36}
               fallback={
@@ -111,10 +111,10 @@ export function DialogPair() {
         {(error) => (
           <box>
             <text fg={theme.text.feedback.error.base} attributes={TextAttributes.BOLD}>
-              Could not load server information
+              无法加载服务器信息
             </text>
             <text fg={theme.text.muted}>{errorMessage(error())}</text>
-            <text fg={theme.text.muted}>Close and reopen Pair to try again.</text>
+            <text fg={theme.text.muted}>请关闭并重新打开配对后重试。</text>
           </box>
         )}
       </Show>

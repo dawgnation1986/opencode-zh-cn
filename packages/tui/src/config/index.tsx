@@ -47,9 +47,9 @@ export type MiniWorkSpinner = Schema.Schema.Type<typeof MiniWorkSpinner>
 export const Plugin = Schema.Union([
   Schema.String,
   Schema.Struct({
-    package: Schema.String.annotate({ description: "Plugin package name or path" }),
+    package: Schema.String.annotate({ description: "插件包名或路径" }),
     options: Schema.optional(Schema.Record(Schema.String, Schema.Any)).annotate({
-      description: "Options passed to the plugin",
+      description: "传递给插件的选项",
     }),
   }),
 ])
@@ -59,199 +59,199 @@ export type DiffSource = Schema.Schema.Type<typeof DiffSource>
 
 export const Cursor = Schema.Struct({
   style: Schema.optional(Schema.Literals(["block", "underline", "line", "default"])).annotate({
-    description: "Cursor shape. Use 'default' to preserve the terminal setting",
+    description: "光标形状。使用 'default' 以保留终端设置",
   }),
   blinking: Schema.optional(Schema.Boolean).annotate({
-    description: "Whether the cursor blinks. Has no effect when style is 'default'",
+    description: "光标是否闪烁。当 style 为 'default' 时无效",
   }),
-}).annotate({ description: "Terminal cursor settings" })
+}).annotate({ description: "终端光标设置" })
 
 export const Info = Schema.Struct({
   theme: Schema.optional(
     Schema.Struct({
-      name: Schema.optional(Schema.String).annotate({ description: "Theme name" }),
+      name: Schema.optional(Schema.String).annotate({ description: "主题名称" }),
       mode: Schema.optional(Schema.Literals(["system", "dark", "light"])).annotate({
-        description: "Color mode; 'system' follows the terminal",
+        description: "颜色模式；'system' 跟随终端",
       }),
     }),
-  ).annotate({ description: "Color theme settings" }),
-  keybinds: Schema.optional(TuiKeybind.KeybindOverrides).annotate({ description: "Custom key bindings" }),
+  ).annotate({ description: "颜色主题设置" }),
+  keybinds: Schema.optional(TuiKeybind.KeybindOverrides).annotate({ description: "自定义按键绑定" }),
   plugins: Schema.optional(Schema.Array(Plugin)).annotate({
-    description: "Ordered plugin enablement directives and external package declarations",
+    description: "有序的插件启用指令和外部包声明",
   }),
   leader: Schema.optional(
     Schema.Struct({
       timeout: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))).annotate({
-        description: "Time in milliseconds to wait for a key after the leader key",
+        description: "按下 leader 键后等待按键的时间（毫秒）",
       }),
     }),
-  ).annotate({ description: "Leader key behavior" }),
+  ).annotate({ description: "Leader 键行为" }),
   scroll: Schema.optional(
     Schema.Struct({
       speed: Schema.optional(Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0.001))).annotate({
-        description: "Distance scrolled per input tick",
+        description: "每次输入滚动事件的滚动距离",
       }),
       acceleration: Schema.optional(Schema.Boolean).annotate({
-        description: "Accelerate scrolling from repeated input",
+        description: "根据重复输入加速滚动",
       }),
     }),
-  ).annotate({ description: "Scrolling behavior" }),
+  ).annotate({ description: "滚动行为" }),
   attention: Schema.optional(
     Schema.Struct({
-      notifications: Schema.optional(Schema.Boolean).annotate({ description: "Show system notifications" }),
-      sound: Schema.optional(Schema.Boolean).annotate({ description: "Play attention sounds" }),
+      notifications: Schema.optional(Schema.Boolean).annotate({ description: "显示系统通知" }),
+      sound: Schema.optional(Schema.Boolean).annotate({ description: "播放提醒声音" }),
       volume: Schema.optional(
         Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0), Schema.isLessThanOrEqualTo(1)),
-      ).annotate({ description: "Attention sound volume from 0 to 1" }),
-      sound_pack: Schema.optional(Schema.String).annotate({ description: "Active attention sound pack ID" }),
+      ).annotate({ description: "提醒声音音量，范围 0 到 1" }),
+      sound_pack: Schema.optional(Schema.String).annotate({ description: "当前启用的提醒声音包 ID" }),
       sounds: Schema.optional(Schema.Record(AttentionSoundName, Schema.optionalKey(Schema.String))).annotate({
-        description: "Sound file overrides by attention event",
+        description: "按提醒事件覆盖声音文件",
       }),
     }),
-  ).annotate({ description: "System notification and sound settings" }),
+  ).annotate({ description: "系统通知和声音设置" }),
   diffs: Schema.optional(
     Schema.Struct({
       source: Schema.optional(DiffSource).annotate({
         description:
-          "Initial diff source; defaults to 'branch' (branch and uncommitted changes). 'turn' shows the session's last turn and falls back to 'branch' outside a session",
+          "初始 diff 来源；默认为 'branch'（分支和未提交的更改）。'turn' 显示会话的最后一轮，在会话外则回退到 'branch'",
       }),
       wrap: Schema.optional(Schema.Literals(["word", "none"])).annotate({
-        description: "Line wrapping behavior in diff output",
+        description: "diff 输出中的换行行为",
       }),
-      tree: Schema.optional(Schema.Boolean).annotate({ description: "Show the diff file tree" }),
-      single: Schema.optional(Schema.Boolean).annotate({ description: "Show only the selected file patch" }),
+      tree: Schema.optional(Schema.Boolean).annotate({ description: "显示 diff 文件树" }),
+      single: Schema.optional(Schema.Boolean).annotate({ description: "仅显示所选文件的补丁" }),
       fullscreen: Schema.optional(Schema.Boolean).annotate({
-        description: "Open the diff side panel full screen; remembers the last full screen toggle",
+        description: "以全屏打开 diff 侧边面板；记住上次的全屏切换状态",
       }),
       view: Schema.optional(Schema.Literals(["auto", "split", "unified"])).annotate({
-        description: "Diff layout; 'auto' selects a layout from the available width",
+        description: "Diff 布局；'auto' 根据可用宽度选择布局",
       }),
     }),
-  ).annotate({ description: "Diff presentation settings" }),
+  ).annotate({ description: "Diff 展示设置" }),
   terminal: Schema.optional(
     Schema.Struct({
-      title: Schema.optional(Schema.Boolean).annotate({ description: "Update the terminal window title" }),
+      title: Schema.optional(Schema.Boolean).annotate({ description: "更新终端窗口标题" }),
       copy: Schema.optional(Schema.Literals(["manual", "select"])).annotate({
-        description: "Copy text manually or immediately after selecting it",
+        description: "手动复制文本，或在选中后立即复制",
       }),
     }),
-  ).annotate({ description: "Terminal integration settings" }),
+  ).annotate({ description: "终端集成设置" }),
   prompt: Schema.optional(
     Schema.Struct({
       editor: Schema.optional(Schema.Boolean).annotate({
-        description: "Include the active editor file or selection as prompt context",
+        description: "将当前编辑器文件或选中内容作为提示上下文",
       }),
       paste: Schema.optional(Schema.Literals(["compact", "full"])).annotate({
-        description: "Display large pastes as compact placeholders or full text",
+        description: "将大段粘贴内容显示为紧凑占位符或完整文本",
       }),
       image_preview: Schema.optional(Schema.Boolean).annotate({
-        description: "Show image attachment previews above the prompt input",
+        description: "在提示输入框上方显示图片附件预览",
       }),
     }),
-  ).annotate({ description: "Prompt input behavior" }),
+  ).annotate({ description: "提示输入行为" }),
   session: Schema.optional(
     Schema.Struct({
       sidebar: Schema.optional(Schema.Literals(["auto", "hide"])).annotate({
-        description: "Session sidebar visibility; 'auto' shows it when space permits",
+        description: "会话侧边栏可见性；'auto' 在空间允许时显示",
       }),
-      scrollbar: Schema.optional(Schema.Boolean).annotate({ description: "Show the session transcript scrollbar" }),
+      scrollbar: Schema.optional(Schema.Boolean).annotate({ description: "显示会话记录滚动条" }),
       thinking: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide model reasoning by default",
+        description: "默认显示或隐藏模型推理",
       }),
       grouping: Schema.optional(Schema.Literals(["auto", "none"])).annotate({
-        description: "Group related transcript items automatically or render each item separately",
+        description: "自动分组相关的记录项，或分别渲染每一项",
       }),
       verbosity: Schema.optional(Schema.Literals(["low", "medium", "high"])).annotate({
         description:
-          "Transcript detail level: low summarizes each run of tools and thoughts, high opens exploration and instruction groups",
+          "记录详细程度：low 会汇总每组工具和思考，high 会展开探索和指令分组",
       }),
       image_preview: Schema.optional(Schema.Boolean).annotate({
-        description: "Show user attachment and tool-result images in the session transcript",
+        description: "在会话记录中显示用户附件和工具结果的图片",
       }),
       tps: Schema.optional(Schema.Boolean).annotate({
-        description: "Show average tokens per second",
+        description: "显示平均每秒 token 数",
       }),
       markdown: Schema.optional(Schema.Literals(["source", "rendered"])).annotate({
-        description: "Show Markdown syntax markers or conceal them in rendered transcript content",
+        description: "显示 Markdown 语法标记，或在渲染的记录内容中隐藏它们",
       }),
       new_location: Schema.optional(Schema.Literals(["launch", "inherit"])).annotate({
-        description: "Start new sessions in the TUI launch directory or inherit the active session location",
+        description: "在 TUI 启动目录中开始新会话，或继承当前会话的位置",
       }),
       permissions: Schema.optional(Schema.Literals(["prompt", "autoaccept"])).annotate({
-        description: "Prompt for permission requests or accept them automatically",
+        description: "对权限请求进行提示，或自动接受",
       }),
     }),
-  ).annotate({ description: "Session transcript presentation settings" }),
+  ).annotate({ description: "会话记录展示设置" }),
   tabs: Schema.optional(
     Schema.Struct({
       mode: Schema.optional(Schema.Literals(["auto", "on", "off"])).annotate({
-        description: "Use session tabs always, never, or when the terminal environment supports them",
+        description: "始终使用会话标签页、从不使用，或当终端环境支持时使用",
       }),
       enabled: Schema.optional(Schema.Boolean).annotate({
-        description: "Legacy tab toggle; use mode instead",
+        description: "旧版标签页开关；请改用 mode",
       }),
       scope: Schema.optional(Schema.Literals(["global", "cwd"])).annotate({
-        description: "Share tabs globally or keep a separate set for each working directory",
+        description: "全局共享标签页，或为每个工作目录保留单独的一组",
       }),
       layout: Schema.optional(Schema.Literals(["horizontal", "vertical"])).annotate({
-        description: "Show tabs in a horizontal strip or vertical sidebar",
+        description: "以水平条或垂直侧边栏显示标签页",
       }),
       indicators: Schema.optional(Schema.Literals(["status", "numbers"])).annotate({
-        description: "Show status icons or always show tab numbers",
+        description: "显示状态图标，或始终显示标签页编号",
       }),
     }),
-  ).annotate({ description: "Tab strip settings" }),
+  ).annotate({ description: "标签栏设置" }),
   mini: Schema.optional(
     Schema.Struct({
       thinking: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide model reasoning",
+        description: "显示或隐藏模型推理",
       }),
       tools: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide tool calls and the assistant text that precedes them",
+        description: "显示或隐藏工具调用及紧随其前的助手文本",
       }),
       shell_output: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide raw shell tool output",
+        description: "显示或隐藏原始 shell 工具输出",
       }),
       turn_summary: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide the agent, model, and duration summary in scrollback",
+        description: "在滚动缓冲区中显示或隐藏 agent、模型和耗时摘要",
       }),
       footer: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide persistent activity, model, usage, and context details in the footer",
+        description: "在页脚中显示或隐藏常驻的活动、模型、用量和上下文详情",
       }),
       splash: Schema.optional(Schema.Literals(["show", "hide"])).annotate({
-        description: "Show or hide the entry and exit splash banners",
+        description: "显示或隐藏进入和退出时的启动横幅",
       }),
       work_spinner: Schema.optional(MiniWorkSpinner).annotate({
-        description: "Work spinner animation in the Mini footer (default: block-soft-slide)",
+        description: "Mini 页脚中的工作加载动画（默认：block-soft-slide）",
       }),
       mono: Schema.optional(Schema.Boolean).annotate({
-        description: "Use monochrome ASCII output",
+        description: "使用单色 ASCII 输出",
       }),
       replay: Schema.optional(Schema.Boolean).annotate({
-        description: "Restore session history on resume and terminal resize",
+        description: "在恢复会话和调整终端大小时还原会话历史",
       }),
       replay_limit: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))).annotate({
-        description: "Maximum number of newest messages restored during replay",
+        description: "回放时还原的最新消息最大数量",
       }),
     }),
-  ).annotate({ description: "Mini transcript presentation settings" }),
+  ).annotate({ description: "Mini 记录展示设置" }),
   debug: Schema.optional(
     Schema.Struct({
-      devtools: Schema.optional(Schema.Boolean).annotate({ description: "Show the DevTools debug bar" }),
-      timing: Schema.optional(Schema.Boolean).annotate({ description: "Show time-to-first-draw diagnostics" }),
+      devtools: Schema.optional(Schema.Boolean).annotate({ description: "显示 DevTools 调试栏" }),
+      timing: Schema.optional(Schema.Boolean).annotate({ description: "显示首帧绘制耗时诊断信息" }),
       turn_tokens: Schema.optional(Schema.Union([Schema.Boolean, Schema.Literal("verbose")])).annotate({
-        description: "Show per-turn token usage diagnostics, optionally with tool call inputs",
+        description: "显示每轮 token 用量诊断信息，可选包含工具调用输入",
       }),
     }),
-  ).annotate({ description: "Debugging settings" }),
+  ).annotate({ description: "调试设置" }),
   experimental: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)).annotate({
-    description: "Experimental features that may change or be removed at any time",
+    description: "可能随时变更或移除的实验性功能",
   }),
-  animations: Schema.optional(Schema.Boolean).annotate({ description: "Enable interface animations" }),
+  animations: Schema.optional(Schema.Boolean).annotate({ description: "启用界面动画" }),
   highlights: Schema.optional(Schema.Boolean).annotate({
-    description: "Show the release highlights once after OpenCode updates",
+    description: "OpenCode 更新后显示一次版本亮点",
   }),
-  mouse: Schema.optional(Schema.Boolean).annotate({ description: "Enable terminal mouse capture" }),
+  mouse: Schema.optional(Schema.Boolean).annotate({ description: "启用终端鼠标捕获" }),
   cursor: Schema.optional(Cursor),
 })
 export type Info = Schema.Schema.Type<typeof Info>

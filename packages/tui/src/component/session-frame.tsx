@@ -32,7 +32,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
   const config = useConfig()
   const data = useData()
   const toast = useToast()
-  const terminalError = () => toast.show({ variant: "error", message: "Unable to load terminal" })
+  const terminalError = () => toast.show({ variant: "error", message: "无法加载终端" })
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
   const panels = usePanel()
@@ -167,13 +167,13 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
     commands: [
       {
         id: "pane.focus.left",
-        title: "Focus session pane",
+        title: "聚焦会话面板",
         enabled: () => !fullscreen(),
         run: focusSession,
       },
       {
         id: "pane.focus.right",
-        title: "Focus right pane",
+        title: "聚焦右侧面板",
         run: focusRightPane,
       },
     ],
@@ -185,7 +185,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
     commands: [
       {
         id: "session.sidebar.toggle",
-        title: rightPane() === "sidebar" ? "Hide sidebar" : "Show sidebar",
+        title: rightPane() === "sidebar" ? "隐藏侧边栏" : "显示侧边栏",
         group: "Session",
         palette: true,
         run: () => {
@@ -197,7 +197,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
         ? [
             {
               id: "terminal.toggle",
-              title: rightPane() === "terminal" ? "Hide terminal pane" : "Show terminal pane",
+              title: rightPane() === "terminal" ? "隐藏终端面板" : "显示终端面板",
               group: "Session",
               palette: true as const,
               run: () => {
@@ -219,7 +219,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
             },
             {
               id: "terminal.select",
-              title: "Select terminal",
+              title: "选择终端",
               group: "Session",
               palette: true as const,
               run: () => {
@@ -232,7 +232,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
             },
             {
               id: "terminal.close",
-              title: "Close terminal pane",
+              title: "关闭终端面板",
               group: "Session",
               palette: true as const,
               enabled: rightPane() === "terminal",
@@ -244,7 +244,7 @@ export function SessionFrame(props: { sessionID: string; verticalTabsWidth: numb
             },
             {
               id: "session.terminal",
-              title: "New terminal",
+              title: "新建终端",
               group: "Session",
               palette: true as const,
               slash: { name: "terminal" },

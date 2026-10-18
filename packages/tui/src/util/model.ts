@@ -13,9 +13,9 @@ export function switchLabel(
   previous?: { providerID: string; id: string; variant?: string },
 ) {
   if (previous?.providerID === model.providerID && previous.id === model.id)
-    return `Switched variant to ${model.variant ?? "default"}`
+    return `已切换变体为 ${model.variant ?? "默认"}`
   const display = models?.find((item) => item.providerID === model.providerID && item.id === model.id)?.name
-  if (display === undefined) return `Switched model to ${formatRef(model)}`
+  if (display === undefined) return `已切换模型为 ${formatRef(model)}`
   const variant = model.variant && model.variant !== "default" ? ` (${model.variant})` : ""
-  return `Switched model to ${display}${variant}`
+  return `已切换模型为 ${display}${variant}`
 }

@@ -19,24 +19,24 @@ export function useWorkingDirectoryActions(input: { directory: () => string | un
     if (!directory) return
     dialog.replace(() => (
       <DialogSelect
-        title="Working directory"
+        title="工作目录"
         renderFilter={false}
         options={[
           {
-            title: "Copy path",
+            title: "复制路径",
             value: "location.copy",
             description: directory,
             onSelect: (dialog) => {
               void clipboard.write(directory).then(() => {
                 dialog.clear()
-                toast.show({ message: "Path copied to clipboard", variant: "info" })
+                toast.show({ message: "路径已复制到剪贴板", variant: "info" })
               }, toast.error)
             },
           },
           {
-            title: "Open folder",
+            title: "打开文件夹",
             value: "location.open",
-            description: "in system file manager",
+            description: "在系统文件管理器中",
             onSelect: (dialog) => {
               dialog.clear()
               void openPath(directory).catch(toast.error)
@@ -45,9 +45,9 @@ export function useWorkingDirectoryActions(input: { directory: () => string | un
           ...(input.onMove
             ? [
                 {
-                  title: "Workspaces",
+                  title: "工作区",
                   value: "session.move",
-                  description: "to another working directory",
+                  description: "到另一个工作目录",
                   onSelect: () => void input.onMove?.(),
                 },
               ]

@@ -18,7 +18,7 @@ import { FadeInText } from "../component/fade-in-text"
 
 let once = false
 const placeholder = {
-  normal: ["Fix a TODO in the codebase", "What is the tech stack of this project?", "Fix broken tests"],
+  normal: ["修复代码库中的 TODO", "这个项目用了哪些技术栈？", "修复失败的测试"],
   shell: ["ls -la", "git status", "pwd"],
 }
 
@@ -162,10 +162,10 @@ function UpdateNotification(props: { width: number }) {
                   </span>
                 </Show>
                 {remote
-                  ? "remote server update available"
+                  ? "远程服务器有可用更新"
                   : state.type === "installed"
-                    ? ` restart to use v${state.version}`
-                    : ` to install v${state.version}`}
+                    ? ` 重启以使用 v${state.version}`
+                    : ` 安装 v${state.version}`}
               </FadeInText>
             </box>
           </Show>

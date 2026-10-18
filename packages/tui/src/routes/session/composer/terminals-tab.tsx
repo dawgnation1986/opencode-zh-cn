@@ -11,13 +11,13 @@ export function TerminalsTab(props: { sessionID: string; visibleTerminalID?: str
   const terminals = useSessionTerminals()
   const theme = useTheme()
   const toast = useToast()
-  const failure = () => toast.show({ variant: "error", message: "Unable to load terminal" })
+  const failure = () => toast.show({ variant: "error", message: "无法加载终端" })
   const [selected, setSelected] = createSignal<number>()
   const session = () => terminals.get(props.sessionID)
   const entries = () => session()?.terminals ?? []
 
   onMount(() => {
-    const cleanup = composer.register({ id: "terminals", label: "Terminals" })
+    const cleanup = composer.register({ id: "terminals", label: "终端" })
     onCleanup(cleanup)
   })
 
@@ -46,19 +46,19 @@ export function TerminalsTab(props: { sessionID: string; visibleTerminalID?: str
     commands: [
       {
         id: "composer.terminal.up",
-        title: "Previous terminal",
+        title: "上一个终端",
         group: "Composer",
         run: () => setSelected((index) => ((index ?? 0) + entries().length) % (entries().length + 1)),
       },
       {
         id: "composer.terminal.down",
-        title: "Next terminal",
+        title: "下一个终端",
         group: "Composer",
         run: () => setSelected((index) => ((index ?? -1) + 1) % (entries().length + 1)),
       },
       {
         id: "composer.terminal.select",
-        title: "Select terminal",
+        title: "选择终端",
         group: "Composer",
         run: select,
       },
@@ -102,7 +102,7 @@ export function TerminalsTab(props: { sessionID: string; visibleTerminalID?: str
                   wrapMode="none"
                   truncate
                 >
-                  {terminal?.foregroundProcess ?? terminal?.title ?? "+ New terminal"}
+                  {terminal?.foregroundProcess ?? terminal?.title ?? "+ 新建终端"}
                 </text>
               </box>
             )

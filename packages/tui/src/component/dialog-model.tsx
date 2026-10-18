@@ -57,12 +57,12 @@ export function DialogModel(props: { providerID?: string }) {
       })
     }
 
-    const favoriteOptions = toOptions(favorites, "Favorites")
+    const favoriteOptions = toOptions(favorites, "收藏")
     const recentOptions = toOptions(
       recents.filter(
         (item) => !favorites.some((fav) => fav.providerID === item.providerID && fav.modelID === item.modelID),
       ),
-      "Recent",
+      "最近",
     )
 
     const modelOptions = sortModelOptions(
@@ -79,7 +79,7 @@ export function DialogModel(props: { providerID?: string }) {
             providerName: provider?.name ?? model.providerID,
             title: model.name,
             releaseDate: model.time.released,
-            description: favorite ? "(Favorite)" : undefined,
+            description: favorite ? "(收藏)" : undefined,
             category: connected() ? (provider?.name ?? model.providerID) : undefined,
             footer: free(model) ? "Free" : undefined,
             onSelect() {
@@ -121,7 +121,7 @@ export function DialogModel(props: { providerID?: string }) {
 
   const title = createMemo(() => {
     const value = provider()
-    if (!value) return "Select model"
+    if (!value) return "选择模型"
     return value.name
   })
 
@@ -143,18 +143,18 @@ export function DialogModel(props: { providerID?: string }) {
   return (
     <DialogSelect<ReturnType<typeof options>[number]["value"]>
       searchInTitle
-      titlePlaceholder="Search models"
+      titlePlaceholder="搜索模型"
       options={options()}
       actions={[
         {
           command: "model.dialog.provider",
           title: newDesigns()
             ? connected()
-              ? "connect integration"
-              : "view all integrations"
+              ? "连接集成"
+              : "查看所有集成"
             : connected()
-              ? "Connect an integration"
-              : "View all integrations",
+              ? "连接集成"
+              : "查看所有集成",
           selection: "none",
           onTrigger() {
             dialog.replace(() => (
@@ -166,7 +166,7 @@ export function DialogModel(props: { providerID?: string }) {
         },
         {
           command: "model.dialog.favorite",
-          title: newDesigns() ? "favorite" : "Favorite",
+          title: newDesigns() ? "收藏" : "收藏",
           hidden: !connected(),
           onTrigger: (option) => {
             local.model.toggleFavorite(option.value as { providerID: string; modelID: string })

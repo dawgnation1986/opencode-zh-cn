@@ -24,14 +24,14 @@ export function PromptFooter(props: {
     const count = props.context.data.session
       .family(props.sessionID)
       .filter((id) => id !== props.sessionID && props.context.data.session.status(id) === "running").length
-    return count ? `${count} subagent${count === 1 ? "" : "s"}` : undefined
+    return count ? `${count} 个子代理${count === 1 ? "" : ""}` : undefined
   })
   const shells = createMemo(() => {
     if (!props.sessionID) return 0
     const count = props.context.data.shell
       .list(props.context.location)
       .filter((shell) => shell.metadata.sessionID === props.sessionID).length
-    return count ? `${count} shell${count === 1 ? "" : "s"}` : undefined
+    return count ? `${count} 个 shell${count === 1 ? "" : ""}` : undefined
   })
   const status = createMemo(() => {
     if (!props.sessionID) return []
@@ -103,7 +103,7 @@ export function PromptFooter(props: {
               flexShrink={0}
             >
               {shortcut("agent.cycle")}{" "}
-              <span style={interactive() ? { fg: props.context.theme.text.muted } : {}}>agents</span>
+              <span style={interactive() ? { fg: props.context.theme.text.muted } : {}}>代理</span>
             </text>
           </Match>
         </Switch>
@@ -115,7 +115,7 @@ export function PromptFooter(props: {
             flexShrink={0}
           >
             {shortcut("command.palette.show")}{" "}
-            <span style={interactive() ? { fg: props.context.theme.text.muted } : {}}>commands</span>
+            <span style={interactive() ? { fg: props.context.theme.text.muted } : {}}>命令</span>
           </text>
         </Show>
       </Match>
@@ -123,7 +123,7 @@ export function PromptFooter(props: {
         <text fg={props.context.theme.text.base} flexShrink={0}>
           esc{" "}
           <span style={{ fg: props.context.theme.text.muted }}>
-            {dimensions().width < 44 ? "shell" : "exit shell mode"}
+            {dimensions().width < 44 ? "shell" : "退出 shell 模式"}
           </span>
         </text>
       </Match>

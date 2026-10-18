@@ -175,10 +175,10 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
       return {
         title,
         titleView: isRemoving ? (
-          <span style={{ fg: theme.text.feedback.error.base }}>Deleting {item.location}</span>
+          <span style={{ fg: theme.text.feedback.error.base }}>正在删除 {item.location}</span>
         ) : deleting ? (
           <span style={{ fg: theme.text.action.destructive.base }}>
-            Press {shortcuts.get("dialog.move_session.delete")} again to confirm
+            再次按 {shortcuts.get("dialog.move_session.delete")} 确认
           </span>
         ) : suffix ? (
           <>
@@ -192,7 +192,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
           directory: item.location,
           subdirectory: item.location !== item.root.directory,
         } as const,
-        category: item.root.directory === current ? "Current" : "Other",
+        category: item.root.directory === current ? "当前" : "其他",
         titleWidth,
         truncateTitle: "left" as const,
       }
@@ -258,9 +258,9 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
           .status({ location: { directory: selected.directory } })
           .catch(() => undefined)
         const choice = await DialogWorkspaceFileChanges.show(dialog, status?.data ?? [], {
-          title: "Delete worktree?",
-          message: "This worktree has file changes. Do you want to delete it anyway?",
-          confirm: { title: "delete", key: "d" },
+          title: "删除工作树？",
+          message: "此工作树有文件变更。仍要删除吗？",
+          confirm: { title: "删除", key: "d" },
         })
         if (choice !== "yes") {
           reopen()
@@ -279,7 +279,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
         if (forcedError) {
           toast.show({
             variant: "error",
-            title: "Failed to delete worktree",
+            title: "删除工作树失败",
             message: errorMessage(forcedError),
           })
           reopen()
@@ -293,7 +293,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
       }
       toast.show({
         variant: "error",
-        title: "Failed to delete worktree",
+        title: "删除工作树失败",
         message: errorMessage(error),
       })
       return
@@ -325,11 +325,11 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
   return (
     <box minHeight={showError() ? 5 : fullHeight()}>
       <DialogSelect
-        title="Worktrees"
+        title="工作树"
         titleView={
           <box flexDirection="row" gap={1}>
             <text fg={theme.text.base} attributes={TextAttributes.BOLD}>
-              Worktrees
+              工作树
             </text>
             <Show when={working() || directories.loading || loadedProject.loading}>
               <Spinner />
@@ -343,24 +343,24 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
           showError() ? (
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
               <text fg={theme.text.feedback.error.base} attributes={TextAttributes.BOLD}>
-                Could not load worktrees
+                无法加载工作树
               </text>
               <text fg={theme.text.muted}>{errorMessage(loadError())}</text>
-              <text fg={theme.text.muted}>Close and reopen Worktrees to try again.</text>
+              <text fg={theme.text.muted}>请关闭并重新打开工作树后重试。</text>
             </box>
           ) : directories.loading || loadedProject.loading ? (
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-              <text fg={theme.text.muted}>Loading worktrees…</text>
+              <text fg={theme.text.muted}>正在加载工作树…</text>
             </box>
           ) : (
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-              <text fg={theme.text.muted}>No worktrees available</text>
+              <text fg={theme.text.muted}>暂无可用工作树</text>
             </box>
           )
         }
         noMatchView={
           <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-            <text fg={theme.text.muted}>No worktrees found</text>
+            <text fg={theme.text.muted}>未找到工作树</text>
           </box>
         }
         locked={showError() || directories.loading || loadedProject.loading || Boolean(removing())}
@@ -374,17 +374,17 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
             ? []
             : [
                 ...(route.data.type === "session"
-                  ? [{ command: "dialog.move_session.move", title: "move", onTrigger: move }]
+                  ? [{ command: "dialog.move_session.move", title: "移动", onTrigger: move }]
                   : []),
                 {
                   command: "dialog.move_session.new",
-                  title: "new",
+                  title: "新建",
                   selection: "none",
                   onTrigger: () => void create(),
                 },
                 {
                   command: "dialog.move_session.delete",
-                  title: "delete",
+                  title: "删除",
                   disabled: (option) => {
                     const value = option?.value
                     if (!value || value.type !== "directory" || value.subdirectory) return true
@@ -394,7 +394,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
                 },
                 {
                   command: "dialog.move_session.refresh",
-                  title: "refresh",
+                  title: "刷新",
                   selection: "none",
                   onTrigger: () => void refresh().catch(toast.error),
                 },

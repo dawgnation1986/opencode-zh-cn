@@ -90,9 +90,9 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
       (entry): DialogSelectOption<string> => ({
         title: label(entry, props.context),
         value: entry.key,
-        category: entry.runtime === "tui" ? "TUI" : "Server",
+        category: entry.runtime === "tui" ? "TUI" : "服务端",
         searchText: entry.runtime === "tui" ? entry.target : source(entry.plugin, props.context),
-        footer: updating(entry) ? "updating" : footer(entry),
+        footer: updating(entry) ? "正在更新" : footer(entry),
         footerColor:
           status(entry) === "failed"
             ? props.context.theme.text.feedback.error.base
@@ -115,8 +115,8 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
   })
   const toggleTitle = createMemo(() => {
     const entry = focusedTui()
-    if (!entry) return "toggle"
-    return props.plugins.registered().find((plugin) => plugin.id === entry.id)?.active ? "disable" : "enable"
+    if (!entry) return "切换"
+    return props.plugins.registered().find((plugin) => plugin.id === entry.id)?.active ? "禁用" : "启用"
   })
   const toggle = (entry: Entry | undefined) => {
     if (locked() || entry?.runtime !== "tui" || !entry.id) return
@@ -126,7 +126,7 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
     void (current.active ? props.plugins.deactivate(current.id) : props.plugins.activate(current.id))
       .then((ok) => {
         if (ok) return
-        props.context.ui.toast.show({ variant: "error", message: `Failed to update plugin ${current.id}` })
+        props.context.ui.toast.show({ variant: "error", message: `更新插件 ${current.id} 失败` })
       })
       .catch((cause) => {
         props.context.ui.toast.show({
@@ -182,14 +182,14 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
         when={detail()}
         fallback={
           <DialogSelect
-            title="Plugins"
+            title="插件"
             options={options()}
             locked={locked()}
             preserveSelection={true}
             bindings={[
               {
                 bind: "ctrl+a",
-                title: "Toggle internal plugins",
+                title: "切换内置插件",
                 group: "Plugins",
                 run: () => {
                   setShowInternal((value) => !value)
@@ -198,9 +198,9 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
             ]}
             footerHints={[
               ...(pluginError(focusedEntry()) && !focusedTui()
-                ? [{ title: "view error", label: "enter", group: "primary" as const }]
+                ? [{ title: "查看错误", label: "enter", group: "primary" as const }]
                 : []),
-              { title: `${showInternal() ? "hide" : "show"} internal`, label: "ctrl+a" },
+              { title: `${showInternal() ? "隐藏" : "显示"}内置插件`, label: "ctrl+a" },
             ]}
             onMove={(option) => setFocused(option.value)}
             onSelect={(option) => {
@@ -215,7 +215,7 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
             }}
             actions={[
               {
-                title: checking() ? "checking for updates" : "check for updates",
+                title: checking() ? "正在检查更新" : "检查更新",
                 command: "dialog.plugins.check",
                 selection: "none",
                 hidden: !entries().some(
@@ -225,7 +225,7 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
                 onTrigger: check,
               },
               {
-                title: "view error",
+                title: "查看错误",
                 command: "dialog.plugins.error",
                 hidden: !pluginError(focusedTui()),
                 onTrigger: (option) => {
@@ -241,7 +241,7 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
                 onTrigger: (option) => toggle(entries().find((entry) => entry.key === option.value)),
               },
               {
-                title: "update",
+                title: "更新",
                 command: "dialog.plugins.update",
                 side: "right",
                 hidden: !updatable(focusedEntry()),
@@ -253,11 +253,11 @@ export function PluginsDialog(props: { context: Plugin.Context; plugins: ReturnT
       >
         {(entry) => (
           <DialogErrorDetails
-            title={`${entry().runtime === "tui" ? "TUI" : "Server"} plugin error`}
+            title={`${entry().runtime === "tui" ? "TUI" : "服务端"}插件错误`}
             source={pluginSource(entry(), props.context)}
-            error={pluginError(entry()) ?? "Unknown plugin error"}
+            error={pluginError(entry()) ?? "未知插件错误"}
             diagnosticRef={pluginErrorRef(entry())}
-            context={`Plugin: ${label(entry(), props.context)}\nStatus: failed\nRuntime: ${entry().runtime}\nSource: ${pluginSource(entry(), props.context)}`}
+            context={`插件：${label(entry(), props.context)}\n状态：失败\n运行时：${entry().runtime}\n来源：${pluginSource(entry(), props.context)}`}
             onBack={() => {
               setDetail()
               dialog.setSize("large")
@@ -303,11 +303,11 @@ function outdated(entry: Entry) {
 function footer(entry: Entry) {
   const details = [
     ...(status(entry) === "active" ? [] : [status(entry)]),
-    ...(isLocal(entry) ? ["local"] : []),
+    ...(isLocal(entry) ? ["本地"] : []),
     ...(entry.runtime === "server" && entry.plugin.source.type === "package" && entry.plugin.source.version
       ? [displayVersion(entry.plugin.source.version)]
       : []),
-    ...(outdated(entry) ? ["update available"] : []),
+    ...(outdated(entry) ? ["有更新可用"] : []),
   ]
   return details.length ? details.join(", ") : undefined
 }
@@ -332,7 +332,7 @@ function Commands(props: { context: Plugin.Context }) {
     commands: [
       {
         id: "plugins.list",
-        title: "Plugins",
+        title: "插件",
         group: "System",
         slash: { name: "plugins" },
         palette: true,

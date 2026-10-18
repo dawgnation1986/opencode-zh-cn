@@ -24,19 +24,19 @@ export function DialogMessage(props: {
 
   return (
     <DialogSelect
-      title="Message Actions"
+      title="消息操作"
       renderFilter={!newDesigns()}
       options={[
         {
-          title: "Jump to",
+          title: "跳转到",
           value: "message.jump",
-          description: "view message in session",
+          description: "在会话中查看消息",
           onSelect: (dialog) => dialog.clear(),
         },
         {
-          title: "Revert",
+          title: "还原",
           value: "session.revert",
-          description: "undo messages and file changes",
+          description: "撤销消息和文件改动",
           onSelect: (dialog) => {
             const value = message()
             if (value?.type === "user") {
@@ -52,9 +52,9 @@ export function DialogMessage(props: {
           },
         },
         {
-          title: "Copy",
+          title: "复制",
           value: "message.copy",
-          description: "message text to clipboard",
+          description: "消息文本到剪贴板",
           onSelect: async (dialog) => {
             const value = message()
             if (!value) return
@@ -78,9 +78,9 @@ export function DialogMessage(props: {
           },
         },
         {
-          title: "Fork",
+          title: "派生",
           value: "session.fork",
-          description: "create a new session",
+          description: "创建新会话",
           onSelect: (dialog) => {
             const value = message()
             if (!value || value.type !== "user") return

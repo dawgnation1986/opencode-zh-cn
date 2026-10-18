@@ -48,16 +48,16 @@ export function formSync(state: FormBodyState, form: FormInfo): FormBodyState {
 }
 
 export function formUnsupported(form: FormInfo): string | undefined {
-  if (!Array.isArray(form.fields) || form.fields.length === 0) return "This form has no supported fields."
+  if (!Array.isArray(form.fields) || form.fields.length === 0) return "此表单没有受支持的字段。"
   for (const field of form.fields as ReadonlyArray<FormField | Record<string, unknown>>) {
-    if (!field || typeof field !== "object" || typeof field.type !== "string") return "This form uses an unknown field."
-    if (!("key" in field) || typeof field.key !== "string") return "This form uses an invalid field."
+    if (!field || typeof field !== "object" || typeof field.type !== "string") return "此表单使用了未知字段。"
+    if (!("key" in field) || typeof field.key !== "string") return "此表单使用了无效字段。"
     if ("when" in field && Array.isArray(field.when) && field.when.length > 0)
-      return "Conditional forms are not supported in Mini yet."
+      return "Mini 暂不支持条件表单。"
     if (field.type === "string" && "pattern" in field && field.pattern !== undefined)
-      return "Pattern-constrained forms are not supported in Mini yet."
+      return "Mini 暂不支持带模式约束的表单。"
     if (!["string", "number", "integer", "boolean", "multiselect", "external"].includes(field.type))
-      return `Field type ${field.type} is not supported in Mini yet.`
+      return `Mini 暂不支持字段类型 ${field.type}。`
   }
 }
 
@@ -82,8 +82,8 @@ export function formSingle(form: FormInfo) {
 }
 
 export function formPlaceholder(field: FormField | undefined) {
-  if (field?.type === "string") return field.placeholder ?? "Type your answer"
-  return "Enter a number"
+  if (field?.type === "string") return field.placeholder ?? "输入你的答案"
+  return "输入一个数字"
 }
 
 export function formMove(state: FormBodyState, form: FormInfo, direction: -1 | 1): FormBodyState {
@@ -128,7 +128,7 @@ export function formValidate(form: FormInfo, state: FormBodyState): string | und
   if (unsupported) return unsupported
   for (const field of form.fields) {
     if (field.type === "external") {
-      if (state.answers[field.key] !== true) return `Acknowledge ${formLabel(field)}`
+      if (state.answers[field.key] !== true) return `请确认 ${formLabel(field)}`
       continue
     }
     const invalid = formValidateValue(field, state.answers[field.key])
@@ -237,5 +237,5 @@ export function formErrorMessage(error: unknown) {
     const tag = "_tag" in error ? error._tag : undefined
     if (typeof tag === "string" && tag.trim()) return tag
   }
-  return "Form request failed"
+  return "表单请求失败"
 }

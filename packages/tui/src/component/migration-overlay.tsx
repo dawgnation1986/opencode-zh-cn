@@ -30,7 +30,7 @@ export function MigrationOverlay() {
       setProgress(undefined)
       toast.show({
         variant: "error",
-        title: "Data migration failed",
+        title: "数据迁移失败",
         message: errorMessage(error),
         duration: 10_000,
       })

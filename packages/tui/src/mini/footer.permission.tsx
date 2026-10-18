@@ -110,7 +110,7 @@ export function RejectField(props: {
       minHeight={1}
       maxHeight={3}
       wrapMode="word"
-      placeholder="Tell OpenCode what to do differently"
+      placeholder="告诉 OpenCode 应如何调整"
       placeholderColor={props.theme.muted}
       textColor={props.theme.formfieldText}
       focusedTextColor={props.theme.formfieldFocusedText}
@@ -170,19 +170,19 @@ export function RunPermissionBody(props: {
   const controlsWidth = () => opts().reduce((total, option) => total + stringWidth(permissionLabel(option)) + 3, -1)
   const hint = () =>
     compact() && width() < 56
-      ? "pgup/pgdn scroll"
-      : `${props.mono ? "left/right" : "⇆"} select  enter confirm  esc ${stage() === "always" ? "cancel" : "reject"}`
+      ? "pgup/pgdn 滚动"
+      : `${props.mono ? "left/right" : "⇆"} 选择  回车 确认  esc ${stage() === "always" ? "取消" : "拒绝"}`
   const inlineControls = () => controlsWidth() + stringWidth(hint()) + 1 <= width() - (compact() ? 0 : 5)
   const title = createMemo(() => {
     if (stage() === "always") {
-      return "Always allow"
+      return "始终允许"
     }
 
     if (stage() === "reject") {
-      return width() < 24 ? "Reject" : "Reject permission"
+      return width() < 24 ? "拒绝" : "拒绝权限"
     }
 
-    return width() < 24 ? "Permission" : "Permission required"
+    return width() < 24 ? "权限" : "需要权限"
   })
 
   createEffect(() => {
@@ -322,7 +322,7 @@ export function RunPermissionBody(props: {
           {title()}
         </text>
         <Show when={!compact() && stage() === "reject"}>
-          <text fg={props.theme.muted}>Tell OpenCode what to do differently</text>
+          <text fg={props.theme.muted}>告诉 OpenCode 应如何调整</text>
         </Show>
       </box>
 
@@ -361,16 +361,16 @@ export function RunPermissionBody(props: {
                 when={!busy()}
                 fallback={
                   <text fg={props.theme.running} height={1} wrapMode="none" truncate flexShrink={0}>
-                    {compact() ? "Waiting…" : "Waiting for permission event…"}
+                    {compact() ? "等待中…" : "等待权限事件…"}
                   </text>
                 }
               >
                 <box flexDirection="row" flexWrap="wrap" columnGap={compact() ? 1 : 2} flexShrink={0}>
                   <text fg={props.theme.text} height={1} wrapMode="none" flexShrink={0}>
-                    enter <span style={{ fg: props.theme.muted }}>{compact() ? "reject" : "confirm"}</span>
+                    enter <span style={{ fg: props.theme.muted }}>{compact() ? "拒绝" : "确认"}</span>
                   </text>
                   <text fg={props.theme.text} height={1} wrapMode="none" flexShrink={0}>
-                    esc <span style={{ fg: props.theme.muted }}>{compact() ? "back" : "cancel"}</span>
+                    esc <span style={{ fg: props.theme.muted }}>{compact() ? "返回" : "取消"}</span>
                   </text>
                 </box>
               </Show>
@@ -534,7 +534,7 @@ export function RunPermissionBody(props: {
             when={!busy()}
             fallback={
               <text fg={props.theme.running} height={1} wrapMode="none" truncate flexShrink={0}>
-                {compact() ? "Waiting…" : "Waiting for permission event…"}
+                {compact() ? "等待中…" : "等待权限事件…"}
               </text>
             }
           >
@@ -544,13 +544,13 @@ export function RunPermissionBody(props: {
                 fallback={
                   <>
                     {props.mono ? "left/right" : "⇆"}
-                    <span style={{ fg: props.theme.muted }}>{" select  "}</span>
-                    enter<span style={{ fg: props.theme.muted }}>{" confirm  "}</span>
-                    esc<span style={{ fg: props.theme.muted }}> {stage() === "always" ? "cancel" : "reject"}</span>
+                    <span style={{ fg: props.theme.muted }}>{" 选择  "}</span>
+                    enter<span style={{ fg: props.theme.muted }}>{" 确认  "}</span>
+                    esc<span style={{ fg: props.theme.muted }}> {stage() === "always" ? "取消" : "拒绝"}</span>
                   </>
                 }
               >
-                pgup/pgdn<span style={{ fg: props.theme.muted }}> scroll</span>
+                pgup/pgdn<span style={{ fg: props.theme.muted }}> 滚动</span>
               </Show>
             </text>
           </Show>

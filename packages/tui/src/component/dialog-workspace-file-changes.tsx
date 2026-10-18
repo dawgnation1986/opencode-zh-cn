@@ -63,7 +63,7 @@ export function DialogWorkspaceFileChanges(props: {
     dialog.clear()
   }
 
-  const confirmAction = () => props.confirm ?? { title: "confirm", key: "enter" }
+  const confirmAction = () => props.confirm ?? { title: "确认", key: "enter" }
 
   useKeyboard((evt) => {
     // Escape needs no handling here: the dialog closes on escape, which resolves as a cancel.
@@ -97,11 +97,11 @@ export function DialogWorkspaceFileChanges(props: {
 
   return (
     <DialogLayout
-      header={<DialogHeader title={props.title ?? "File Changes Found"} />}
+      header={<DialogHeader title={props.title ?? "发现文件变更"} />}
       footer={{
         actions: {
           primary: [
-            { title: "cancel", key: "esc", onTrigger: () => choose("no") },
+            { title: "取消", key: "esc", onTrigger: () => choose("no") },
             { title: confirmAction().title, key: confirmAction().key, onTrigger: () => choose("yes") },
           ],
         },
@@ -129,7 +129,7 @@ export function DialogWorkspaceFileChanges(props: {
     >
       <box gap={1}>
         <text fg={theme.text.muted} wrapMode="word">
-          {props.message ?? "Do you want to move these changes with the session?"}
+          {props.message ?? "是否要随会话一起移动这些变更？"}
         </text>
         <DialogBleed>
           <scrollbox

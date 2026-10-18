@@ -40,16 +40,16 @@ export function SessionLocationMissing(props: { directory: string; projectID: st
         : await client.api.worktree
             .create({ projectID: props.projectID, name: selection.name })
             .then((result) => {
-              if (!result.directory) throw new Error("No worktree directory returned")
+              if (!result.directory) throw new Error("未返回工作树目录")
               return result.directory
             })
             .catch((error) => {
-              toast.show({ title: "Creating workspace failed", message: errorMessage(error), variant: "error" })
+              toast.show({ title: "创建工作区失败", message: errorMessage(error), variant: "error" })
               return undefined
             })
     if (!directory) return
     await client.api.session.move({ sessionID: props.sessionID, directory }).catch((error) => {
-      toast.show({ title: "Failed to move session", message: errorMessage(error), variant: "error" })
+      toast.show({ title: "移动会话失败", message: errorMessage(error), variant: "error" })
     })
   }
 
@@ -65,16 +65,16 @@ export function SessionLocationUnavailable(props: { directory: string; onMove: (
     <SessionQuestion
       id="session.location-missing"
       group="Session recovery"
-      choicesLabel="Recovery actions"
+      choicesLabel="恢复操作"
       instance={props.directory}
-      title="Session location unavailable"
+      title="会话位置不可用"
       body={
         <box paddingLeft={1} gap={1}>
           <text fg={theme.text.muted}>{directory()}</text>
-          <text fg={theme.text.base}>Choose another directory to continue this session.</text>
+          <text fg={theme.text.base}>选择另一个目录以继续此会话。</text>
         </box>
       }
-      options={{ move: "Choose directory" }}
+      options={{ move: "选择目录" }}
       onSelect={props.onMove}
     />
   )

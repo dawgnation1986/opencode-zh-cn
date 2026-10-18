@@ -20,7 +20,7 @@ import { monoTruncate } from "./mono"
 import type { RunSplashTheme } from "./theme"
 
 const SPLASH_TITLE_LIMIT = 50
-const SPLASH_TITLE_FALLBACK = "Untitled session"
+const SPLASH_TITLE_FALLBACK = "未命名会话"
 
 type SplashInput = {
   title: string | undefined

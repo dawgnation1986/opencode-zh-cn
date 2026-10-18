@@ -93,7 +93,7 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
               wrapMode="none"
               selectable={false}
             >
-              {props.source ?? "Files"}
+              {props.source ?? "文件"}
             </text>
             <Show when={props.sourceDetail}>
               <text fg={theme.text.muted} selectable={false} flexGrow={1} minWidth={0} wrapMode="none" truncate>
@@ -103,7 +103,7 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
           </box>
           <text id="diff-review-count" fg={theme.text.muted} wrapMode="none" flexShrink={0}>
             {reviewedCount()}/{props.files.length}
-            {props.source ? "" : " reviewed"}
+            {props.source ? "" : " 已审阅"}
           </text>
         </box>
         <scrollbox
@@ -119,7 +119,7 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
               <text />
             </Match>
             <Match when={props.files.length === 0}>
-              <text fg={theme.text.muted}>No files</text>
+              <text fg={theme.text.muted}>没有文件</text>
             </Match>
             <Match when={props.files.length > 0}>
               <box flexShrink={0} gap={list() ? 1 : 0}>

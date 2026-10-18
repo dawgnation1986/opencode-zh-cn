@@ -203,7 +203,7 @@ export function RunEntryContent(props: {
                 </box>
               ) : (
                 <text width="100%" wrapMode="word" fg={theme().block.diffRemoved}>
-                  -{item.deletions ?? 0} line{item.deletions === 1 ? "" : "s"}
+                  -{item.deletions ?? 0} 行{item.deletions === 1 ? "" : ""}
                 </text>
               )}
             </box>
@@ -232,7 +232,7 @@ export function RunEntryContent(props: {
       <Match when={question_snapshot()}>
         <box width="100%" flexDirection="column" gap={1}>
           <text width="100%" wrapMode="word" fg={theme().block.muted}>
-            # Questions
+            # 问题
           </text>
           <box width="100%" flexDirection="column" gap={1}>
             {question_snapshot()!.items.map((item) => (

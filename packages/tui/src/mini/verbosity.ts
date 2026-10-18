@@ -31,10 +31,10 @@ const presets = {
 } as const satisfies Record<MiniVerbosity, VerbosityKnobs>
 
 const labels = {
-  quiet: "Quiet",
-  default: "Default",
-  everything: "Everything",
-  custom: "Custom",
+  quiet: "安静",
+  default: "默认",
+  everything: "全部",
+  custom: "自定义",
 } as const
 
 export function verbosityPreset(level: MiniVerbosity): VerbosityKnobs {

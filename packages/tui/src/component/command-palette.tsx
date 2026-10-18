@@ -38,7 +38,7 @@ export function CommandPaletteDialog() {
     title: setting.title,
     category: setting.category,
     searchText: setting.keywords?.join(" "),
-    searchFooter: `Settings · ${setting.category}`,
+    searchFooter: `设置 · ${setting.category}`,
     value: `setting:${settingID(setting)}`,
     onSelect: (dialog: DialogContext) => {
       dialog.replace(() => <DialogConfig current={settingID(setting)} />)
@@ -54,7 +54,7 @@ export function CommandPaletteDialog() {
         .map((option) => ({
           ...option,
           value: `suggested:${option.value}`,
-          category: "Suggested",
+          category: "建议",
         })),
       ...options(),
     ]
@@ -63,9 +63,9 @@ export function CommandPaletteDialog() {
   return (
     <DialogSelect
       ref={(value) => (ref = value)}
-      title="Commands"
+      title="命令"
       searchInTitle
-      titlePlaceholder="Search commands"
+      titlePlaceholder="搜索命令"
       options={list()}
       flat={true}
       filterThreshold={0.7}

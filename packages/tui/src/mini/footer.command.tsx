@@ -115,18 +115,18 @@ function countLabel(count: number, total: number, query: string) {
 
 function subagentStatusLabel(status: FooterSubagentTab["status"]) {
   if (status === "completed") {
-    return "done"
+    return "完成"
   }
 
   if (status === "cancelled") {
-    return "cancelled"
+    return "已取消"
   }
 
   if (status === "error") {
-    return "error"
+    return "错误"
   }
 
-  return "running"
+  return "运行中"
 }
 
 function match<T extends PanelEntry>(query: string, entries: T[]) {
@@ -417,25 +417,25 @@ export function RunCommandMenuBody(props: {
     const session: CommandEntry[] = [
       {
         action: "editor",
-        category: "Session",
-        display: "Open editor",
+        category: "会话",
+        display: "打开编辑器",
         footer: "/editor",
         keywords: "editor compose draft external editor",
       },
       {
         action: "status",
-        category: "Session",
-        display: "Show status",
+        category: "会话",
+        display: "显示状态",
         keywords: "status activity model context usage footer",
       },
       ...(props.subagents().length > 0
         ? [
             {
               action: "subagent" as const,
-              category: "Session",
-              display: "View subagents",
+              category: "会话",
+              display: "查看子代理",
               footer:
-                activeSubagentCount() > 0 ? `${activeSubagentCount()} active` : `${props.subagents().length} recent`,
+                activeSubagentCount() > 0 ? `${activeSubagentCount()} 活跃` : `${props.subagents().length} 最近`,
               keywords: props
                 .subagents()
                 .map((item) => `${item.label} ${item.description} ${item.title ?? ""}`)
@@ -445,17 +445,17 @@ export function RunCommandMenuBody(props: {
         : []),
       {
         action: "slash",
-        category: "Session",
+        category: "会话",
         name: "compact",
-        display: "Compact session",
+        display: "压缩会话",
         footer: "/compact",
         keywords: "compact session context",
       },
       {
         action: "slash",
-        category: "Session",
+        category: "会话",
         name: "new",
-        display: "New session",
+        display: "新建会话",
         footer: "/new",
         keywords: "new session clear",
       },
@@ -463,21 +463,21 @@ export function RunCommandMenuBody(props: {
     const agent: CommandEntry[] = [
       {
         action: "agent",
-        category: "Agent",
-        display: "Switch agent",
+        category: "代理",
+        display: "切换代理",
       },
       {
         action: "model",
-        category: "Agent",
-        display: "Switch model",
+        category: "代理",
+        display: "切换模型",
       },
       ...(props.queued().length > 0
         ? [
             {
               action: "queued" as const,
-              category: "Agent",
-              display: "View pending prompts",
-              footer: `${props.queued().length} pending`,
+              category: "代理",
+              display: "查看待处理提示",
+              footer: `${props.queued().length} 待处理`,
               keywords: props
                 .queued()
                 .map((item) => item.prompt.text)
@@ -487,8 +487,8 @@ export function RunCommandMenuBody(props: {
         : []),
       {
         action: "variant.cycle",
-        category: "Agent",
-        display: "Variant cycle",
+        category: "代理",
+        display: "循环切换变体",
         footer: props.variantCycle,
         keywords: "variant cycle",
       },
@@ -496,8 +496,8 @@ export function RunCommandMenuBody(props: {
         ? [
             {
               action: "variant.list" as const,
-              category: "Agent",
-              display: "Switch model variant",
+              category: "代理",
+              display: "切换模型变体",
               keywords: `variant variants ${props.variants().join(" ")}`,
             },
           ]
@@ -508,19 +508,19 @@ export function RunCommandMenuBody(props: {
       ...agent,
       {
         action: "clear",
-        category: "System",
-        display: "Clear screen",
+        category: "系统",
+        display: "清屏",
         footer: props.clearShortcut,
         keywords: "clear screen cls redraw",
       },
       {
         action: "settings",
-        category: "System",
-        display: "Settings",
+        category: "系统",
+        display: "设置",
         footer: "/settings",
         keywords: "/settings settings preferences configuration",
       },
-      { action: "exit", category: "System", display: "Exit", footer: "/exit", keywords: "/exit exit" },
+      { action: "exit", category: "系统", display: "退出", footer: "/exit", keywords: "/exit exit" },
     ]
   })
   const pick = (item: CommandEntry) => {
@@ -595,13 +595,13 @@ export function RunCommandMenuBody(props: {
 
   return (
     <PanelShell
-      title="Commands"
+      title="命令"
       layout={controller.layout()}
       countVisible={false}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
@@ -615,7 +615,7 @@ export function RunCommandMenuBody(props: {
         rows={controller.menu.limit}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No results found"
+        empty="未找到结果"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -644,7 +644,7 @@ export function RunAgentSelectBody(props: {
         category: "",
         display: agent.id,
         description: agent.description,
-        footer: props.current() === agent.id ? "current" : undefined,
+        footer: props.current() === agent.id ? "当前" : undefined,
         footerTone: "selection" as const,
         keywords: `${agent.id} ${agent.name} ${agent.description ?? ""}`,
         id: agent.id,
@@ -661,12 +661,12 @@ export function RunAgentSelectBody(props: {
 
   return (
     <PanelShell
-      title="Select agent"
+      title="选择智能体"
       layout={controller.layout()}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
@@ -680,7 +680,7 @@ export function RunAgentSelectBody(props: {
         rows={controller.menu.limit}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No agents found"
+        empty="未找到智能体"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -703,72 +703,72 @@ export function RunSettingsBody(props: {
   const [saving, setSaving] = createSignal<SettingEntry["key"]>()
   const entries = createMemo<SettingEntry[]>(() => [
     {
-      category: "Transcript",
-      display: "Verbosity",
-      footer: saving() === "verbosity" ? "saving" : verbosityLabel(matchMiniVerbosity(props.settings())),
+      category: "转录",
+      display: "详细程度",
+      footer: saving() === "verbosity" ? "保存中" : verbosityLabel(matchMiniVerbosity(props.settings())),
       footerTone: saving() === "verbosity" ? "running" : "selection",
       keywords: `verbosity quiet default everything custom noise ${verbosityLabel(matchMiniVerbosity(props.settings()))}`,
       key: "verbosity",
     },
     {
-      category: "Transcript",
-      display: "Thinking",
-      footer: saving() === "thinking" ? "saving" : props.settings().thinking,
+      category: "转录",
+      display: "思考",
+      footer: saving() === "thinking" ? "保存中" : props.settings().thinking,
       footerTone: saving() === "thinking" ? "running" : "selection",
       keywords: `thinking reasoning ${props.settings().thinking}`,
       key: "thinking",
     },
     {
-      category: "Transcript",
-      display: "Tools",
-      footer: saving() === "tools" ? "saving" : props.settings().tools,
+      category: "转录",
+      display: "工具",
+      footer: saving() === "tools" ? "保存中" : props.settings().tools,
       footerTone: saving() === "tools" ? "running" : "selection",
       keywords: `tools files skills activity work steps intermediate ${props.settings().tools}`,
       key: "tools",
     },
     {
-      category: "Transcript",
+      category: "转录",
       display: "Shell",
-      footer: saving() === "shell_output" ? "saving" : props.settings().shell_output,
+      footer: saving() === "shell_output" ? "保存中" : props.settings().shell_output,
       footerTone: saving() === "shell_output" ? "running" : "selection",
       keywords: `shell tool command output ${props.settings().shell_output}`,
       key: "shell_output",
     },
     {
-      category: "Transcript",
-      display: "Turn summary",
-      footer: saving() === "turn_summary" ? "saving" : props.settings().turn_summary,
+      category: "转录",
+      display: "回合摘要",
+      footer: saving() === "turn_summary" ? "保存中" : props.settings().turn_summary,
       footerTone: saving() === "turn_summary" ? "running" : "selection",
       keywords: `turn summary agent model duration ${props.settings().turn_summary}`,
       key: "turn_summary",
     },
     {
-      category: "Terminal",
-      display: "Footer details",
-      footer: saving() === "footer" ? "saving" : props.settings().footer,
+      category: "终端",
+      display: "页脚详情",
+      footer: saving() === "footer" ? "保存中" : props.settings().footer,
       footerTone: saving() === "footer" ? "running" : "selection",
       keywords: `footer status activity model context usage ${props.settings().footer}`,
       key: "footer",
     },
     {
-      category: "Terminal",
-      display: "Splash",
-      footer: saving() === "splash" ? "saving" : props.settings().splash,
+      category: "终端",
+      display: "启动画面",
+      footer: saving() === "splash" ? "保存中" : props.settings().splash,
       footerTone: saving() === "splash" ? "running" : "selection",
       keywords: `splash entry exit banner ${props.settings().splash}`,
       key: "splash",
     },
     {
-      category: "Terminal",
-      display: "Monochrome UI",
-      footer: saving() === "mono" ? "saving" : props.settings().mono ? "on" : "off",
+      category: "终端",
+      display: "单色 UI",
+      footer: saving() === "mono" ? "保存中" : props.settings().mono ? "开" : "关",
       footerTone: saving() === "mono" ? "running" : "selection",
       keywords: `mono monochrome ascii legacy compat terminal ${props.settings().mono ? "on" : "off"}`,
       key: "mono",
     },
     {
-      category: "Terminal",
-      display: "Work spinner",
+      category: "终端",
+      display: "工作加载动画",
       icon: (color) => (
         <OneCellSpinner
           animation={props.mono ? SEED_MONO : WORK_SPINNERS[props.settings().work_spinner]}
@@ -780,7 +780,7 @@ export function RunSettingsBody(props: {
       ),
       footer:
         saving() === "work_spinner"
-          ? "saving"
+          ? "保存中"
           : props.settings().work_spinner.replace("block-", "").replaceAll("-", " "),
       footerTone: saving() === "work_spinner" ? "running" : "selection",
       keywords: `work spinner animation ${props.settings().work_spinner}`,
@@ -826,17 +826,17 @@ export function RunSettingsBody(props: {
 
   return (
     <PanelShell
-      title="Settings"
+      title="设置"
       layout={controller.layout()}
       countVisible={false}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
-      hint="left/right change"
+      hint="←/→ 切换"
       mono={props.mono}
     >
       <RunFooterMenu
@@ -847,7 +847,7 @@ export function RunSettingsBody(props: {
         rows={controller.menu.limit}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No settings found"
+        empty="未找到设置"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -911,16 +911,16 @@ export function RunSubagentSelectBody(props: {
 
   return (
     <PanelShell
-      title="Select subagent"
+      title="选择子代理"
       layout={controller.layout()}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
-      hint={`tab show ${active() ? "inactive" : "active"}`}
+      hint={`tab 显示 ${active() ? "未激活" : "激活"}`}
       mono={props.mono}
     >
       <RunFooterMenu
@@ -931,7 +931,7 @@ export function RunSubagentSelectBody(props: {
         rows={controller.menu.rows}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No subagents found"
+        empty="未找到子代理"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -957,7 +957,7 @@ export function RunQueuedPromptSelectBody(props: {
     props.prompts().map((prompt) => ({
       category: "",
       display: prompt.prompt.text.replaceAll("\n", " "),
-      footer: prompt.delivery === "queue" ? "queued" : "steering",
+      footer: prompt.delivery === "queue" ? "已排队" : "引导",
       keywords: prompt.prompt.text,
       prompt,
     })),
@@ -977,7 +977,7 @@ export function RunQueuedPromptSelectBody(props: {
     commands: [
       {
         id: "queued_prompt.undo",
-        title: "Undo",
+        title: "撤销",
         group: "Prompt",
         run() {
           const item = controller.items()[controller.menu.selected()]
@@ -987,7 +987,7 @@ export function RunQueuedPromptSelectBody(props: {
       },
       {
         id: "queued_prompt.delete",
-        title: "Delete pending prompt",
+        title: "删除待处理提示词",
         group: "Prompt",
         run() {
           const item = controller.items()[controller.menu.selected()]
@@ -1000,19 +1000,19 @@ export function RunQueuedPromptSelectBody(props: {
 
   return (
     <PanelShell
-      title="Pending prompts"
+      title="待处理提示词"
       layout={controller.layout()}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
       hint={[
-        controller.items()[controller.menu.selected()]?.prompt.delivery === "steer" ? "enter queue" : "enter steer",
-        deleteShortcut() ? `${deleteShortcut()} delete` : undefined,
-        undoShortcut() ? `${undoShortcut()} undo` : undefined,
+        controller.items()[controller.menu.selected()]?.prompt.delivery === "steer" ? "回车 引导" : "回车 入队",
+        deleteShortcut() ? `${deleteShortcut()} 删除` : undefined,
+        undoShortcut() ? `${undoShortcut()} 撤销` : undefined,
       ]
         .filter(Boolean)
         .join(" · ")}
@@ -1026,7 +1026,7 @@ export function RunQueuedPromptSelectBody(props: {
         rows={controller.menu.rows}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No pending prompts"
+        empty="无待处理提示词"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -1049,8 +1049,8 @@ export function RunVariantSelectBody(props: {
   const entries = createMemo<VariantEntry[]>(() => [
     {
       category: "",
-      display: "Default",
-      footer: props.current() === undefined ? "current" : undefined,
+      display: "默认",
+      footer: props.current() === undefined ? "当前" : undefined,
       footerTone: "selection",
       keywords: "default",
       variant: undefined,
@@ -1059,7 +1059,7 @@ export function RunVariantSelectBody(props: {
     ...props.variants().map((variant) => ({
       category: "",
       display: variant,
-      footer: props.current() === variant ? "current" : undefined,
+      footer: props.current() === variant ? "当前" : undefined,
       footerTone: "selection" as const,
       keywords: variant,
       variant,
@@ -1076,12 +1076,12 @@ export function RunVariantSelectBody(props: {
 
   return (
     <PanelShell
-      title="Select variant"
+      title="选择变体"
       layout={controller.layout()}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
@@ -1095,7 +1095,7 @@ export function RunVariantSelectBody(props: {
         rows={controller.menu.limit}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty="No results found"
+        empty="未找到结果"
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}
@@ -1124,9 +1124,9 @@ export function RunModelSelectBody(props: {
             const title = model.name ?? modelID
             const current = props.current()?.providerID === provider.id && props.current()?.modelID === modelID
             const footer = current
-              ? "current"
+              ? "当前"
               : model.cost?.input === 0 && provider.id === "opencode"
-                ? "Free"
+                ? "免费"
                 : title !== modelID
                   ? modelID
                   : undefined
@@ -1167,12 +1167,12 @@ export function RunModelSelectBody(props: {
 
   return (
     <PanelShell
-      title="Select model"
+      title="选择模型"
       layout={controller.layout()}
       query={controller.query()}
       count={controller.items().length}
       total={entries().length}
-      placeholder="Search"
+      placeholder="搜索"
       theme={props.theme}
       inputRef={controller.inputRef}
       onQuery={controller.setQuery}
@@ -1192,7 +1192,7 @@ export function RunModelSelectBody(props: {
         rows={controller.menu.limit}
         limit={controller.menu.limit()}
         compact={controller.layout().compact}
-        empty={props.providers() ? "No results found" : "Models loading"}
+        empty={props.providers() ? "未找到结果" : "模型加载中"}
         border={false}
         paddingLeft={panelPad(props.mono)}
         paddingRight={panelPad(props.mono)}

@@ -41,7 +41,7 @@ export function SidebarMcp(props: { context: Plugin.Context; sessionID: string }
             <Show when={!view.open}>
               <span style={{ fg: theme.text.muted }}>
                 {" "}
-                ({on()} active{bad() > 0 ? `, ${bad()} error${bad() > 1 ? "s" : ""}` : ""})
+                ({on()} 个启用{bad() > 0 ? `, ${bad()} 个错误${bad() > 1 ? "" : ""}` : ""})
               </span>
             </Show>
           </text>
@@ -76,11 +76,11 @@ export function SidebarMcp(props: { context: Plugin.Context; sessionID: string }
                   flexShrink={0}
                 >
                   <Switch fallback={item.status.status}>
-                    <Match when={item.status.status === "connected"}>Connected</Match>
-                    <Match when={item.status.status === "pending"}>Connecting</Match>
-                    <Match when={item.status.status === "failed"}>Error</Match>
-                    <Match when={item.status.status === "disabled"}>Disabled</Match>
-                    <Match when={item.status.status === "needs_auth"}>Sign in</Match>
+                    <Match when={item.status.status === "connected"}>已连接</Match>
+                    <Match when={item.status.status === "pending"}>连接中</Match>
+                    <Match when={item.status.status === "failed"}>错误</Match>
+                    <Match when={item.status.status === "disabled"}>已禁用</Match>
+                    <Match when={item.status.status === "needs_auth"}>登录</Match>
                   </Switch>
                 </text>
               </box>

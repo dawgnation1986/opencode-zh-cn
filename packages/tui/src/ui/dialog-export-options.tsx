@@ -58,7 +58,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
     commands: [
       {
         bind: "tab",
-        title: "Next export option",
+        title: "下一个导出选项",
         group: "Dialog",
         run: () => {
           const options: Active[] =
@@ -70,14 +70,14 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
       ...(newDesigns()
         ? [
             // The footer owns enter (save) and c (copy), so space toggles the focused option instead.
-            { bind: "return", title: "Save to file", group: "Dialog", run: () => confirm("export") },
-            { bind: "c", title: "Copy export", group: "Dialog", run: () => confirm("copy") },
-            { bind: "space", title: "Toggle export option", group: "Dialog", run: activate },
+            { bind: "return", title: "保存到文件", group: "Dialog", run: () => confirm("export") },
+            { bind: "c", title: "复制导出", group: "Dialog", run: () => confirm("copy") },
+            { bind: "space", title: "切换导出选项", group: "Dialog", run: activate },
           ]
         : [
             {
               bind: "return",
-              title: "Select export option",
+              title: "选择导出选项",
               group: "Dialog",
               run: activate,
             },
@@ -92,12 +92,12 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
 
   return (
     <DialogLayout
-      header={<DialogHeader title="Export session" />}
+      header={<DialogHeader title="导出会话" />}
       footer={{
         actions: {
           primary: [
-            { title: "copy", key: "c", onTrigger: () => confirm("copy") },
-            { title: "save to file", key: "enter", onTrigger: () => confirm("export") },
+            { title: "复制", key: "c", onTrigger: () => confirm("copy") },
+            { title: "保存到文件", key: "enter", onTrigger: () => confirm("export") },
           ],
         },
       }}
@@ -109,7 +109,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
             backgroundColor={overlayTheme.background.raised.high}
             onMouseUp={() => confirm("copy")}
           >
-            <text fg={overlayTheme.text.base}>Copy</text>
+            <text fg={overlayTheme.text.base}>复制</text>
           </box>
           <box
             paddingLeft={4}
@@ -120,7 +120,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
             onMouseUp={() => confirm("export")}
           >
             <text fg={store.active === "export" ? theme.text.action.primary.focused : theme.text.action.primary.base}>
-              Export
+              导出
             </text>
           </box>
         </box>
@@ -128,7 +128,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
     >
       <box gap={1}>
         <box flexDirection="row" gap={1}>
-          <text fg={theme.text.base}>Export as:</text>
+          <text fg={theme.text.base}>导出为：</text>
           <box flexDirection="row" gap={1}>
             <For each={["markdown", "json"] as const}>
               {(format) => (
@@ -196,7 +196,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
                     : theme.text.formfield.base
               }
             >
-              Include thinking
+              包含思考
             </text>
           </box>
           <box
@@ -234,7 +234,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
                     : theme.text.formfield.base
               }
             >
-              Include tools
+              包含工具
             </text>
           </box>
         </Show>
@@ -274,7 +274,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
                     : theme.text.formfield.base
               }
             >
-              Sanitize sensitive data
+              清理敏感数据
             </text>
           </box>
         </Show>

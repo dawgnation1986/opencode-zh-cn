@@ -15,11 +15,11 @@ export function DialogStatus() {
     return theme.text.muted
   }
   return (
-    <DialogLayout header={<DialogHeader title="Status" />}>
-      <Show when={mcp().length > 0} fallback={<text fg={theme.text.base}>No MCP servers</text>}>
+    <DialogLayout header={<DialogHeader title="状态" />}>
+      <Show when={mcp().length > 0} fallback={<text fg={theme.text.base}>无 MCP 服务器</text>}>
         <box>
           <text fg={theme.text.base}>
-            {mcp().length} MCP server{mcp().length === 1 ? "" : "s"}
+            {mcp().length} 个 MCP 服务器{mcp().length === 1 ? "" : ""}
           </text>
           <For each={mcp()}>
             {(item) => (
@@ -31,11 +31,11 @@ export function DialogStatus() {
                   <b>{item.name}</b>{" "}
                   <span style={{ fg: theme.text.muted }}>
                     <Switch fallback={item.status.status}>
-                      <Match when={item.status.status === "connected"}>Connected</Match>
+                      <Match when={item.status.status === "connected"}>已连接</Match>
                       <Match when={item.status.status === "failed" && item.status}>{(val) => val().error}</Match>
-                      <Match when={item.status.status === "disabled"}>Disabled in configuration</Match>
+                      <Match when={item.status.status === "disabled"}>已在配置中禁用</Match>
                       <Match when={item.status.status === "needs_auth" && item.status}>
-                        {(val) => `Needs authentication: ${val().error}`}
+                        {(val) => `需要认证：${val().error}`}
                       </Match>
                     </Switch>
                   </span>

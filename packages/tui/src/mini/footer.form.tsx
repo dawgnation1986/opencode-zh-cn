@@ -98,12 +98,12 @@ export function RunFormBody(props: {
   })
 
   const action = createMemo(() => {
-    if (confirm()) return "submit"
-    if (textual() || state().editing) return "save"
+    if (confirm()) return "提交"
+    if (textual() || state().editing) return "保存"
     const field = externalField()
-    if (!field) return "choose"
-    if (state().answers[field.key] === true) return formSingle(props.request) ? "submit" : "next"
-    return state().externalReady[field.key] ? (size().width < 24 ? "done" : "acknowledge") : "open URL"
+    if (!field) return "选择"
+    if (state().answers[field.key] === true) return formSingle(props.request) ? "提交" : "下一步"
+    return state().externalReady[field.key] ? (size().width < 24 ? "完成" : "确认") : "打开 URL"
   })
 
   createEffect(() => {
@@ -198,7 +198,7 @@ export function RunFormBody(props: {
     const field = current()
     if (field?.type === "external") {
       if (state().answers[field.key] !== true) {
-        setState((previous) => formSetError(previous, `Acknowledge ${formLabel(field)}`))
+        setState((previous) => formSetError(previous, `请确认 ${formLabel(field)}`))
         return
       }
     } else if (field) {
@@ -234,7 +234,7 @@ export function RunFormBody(props: {
       setState((previous) => formSetExternalReady(previous, field.key))
     } catch {
       setState((previous) => formSetExternalReady(previous, field.key))
-      setState((previous) => formSetError(previous, "Could not open the URL. Open it manually, then press enter."))
+      setState((previous) => formSetError(previous, "无法打开 URL。请手动打开，然后按回车。"))
     }
   }
 
@@ -325,7 +325,7 @@ export function RunFormBody(props: {
         <Show when={!unsupported() && !formSingle(props.request)}>
           <text fg={props.theme.muted} wrapMode="none" flexShrink={0}>
             {confirm()
-              ? "Review"
+              ? "复查"
               : `${Math.min(state().field + 1, props.request.fields.length)}/${props.request.fields.length}`}
           </text>
         </Show>
@@ -373,7 +373,7 @@ export function RunFormBody(props: {
                   {value()}
                 </text>
                 <text width="100%" fg={props.theme.muted} flexShrink={0}>
-                  This request remains pending until you dismiss it.
+                  在你关闭之前，此请求将一直处于待处理状态。
                 </text>
               </box>
             )}
@@ -393,10 +393,10 @@ export function RunFormBody(props: {
                   flexShrink={0}
                 >
                   {state().answers[field().key] === true
-                    ? "Acknowledged"
+                    ? "已确认"
                     : state().externalReady[field().key]
-                      ? "Press enter to acknowledge completion"
-                      : "Press enter to open the URL"}
+                      ? "按回车确认完成"
+                      : "按回车打开 URL"}
                 </text>
               </box>
             )}
@@ -405,8 +405,8 @@ export function RunFormBody(props: {
             <box width="100%" flexDirection="column" flexShrink={0} gap={compact() ? 0 : 1}>
               <text width="100%" fg={props.theme.text} wrapMode="word" flexShrink={0}>
                 {answerField()!.description ?? formLabel(answerField()!)}
-                {answerField()!.required ? " (required)" : ""}
-                {multiple() ? " (select all that apply)" : ""}
+                {answerField()!.required ? " （必填）" : ""}
+                {multiple() ? " （选择所有适用项）" : ""}
               </text>
               <Show when={!textual() && !state().editing}>
                 <box width="100%" flexDirection="column" flexShrink={0}>
@@ -513,7 +513,7 @@ export function RunFormBody(props: {
                             : props.theme.formfieldText
                         }
                       >
-                        Type your own answer
+                        输入你自己的答案
                       </text>
                     </box>
                   </Show>
@@ -529,9 +529,9 @@ export function RunFormBody(props: {
                     {formLabel(field)}:{" "}
                     {field.type === "external"
                       ? state().answers[field.key] === true
-                        ? "acknowledged"
-                        : "required"
-                      : formDisplay(field, state().answers[field.key]) || "(not answered)"}
+                        ? "已确认"
+                        : "必填"
+                      : formDisplay(field, state().answers[field.key]) || "（未回答）"}
                   </text>
                 )}
               </For>
@@ -596,18 +596,18 @@ export function RunFormBody(props: {
               minWidth={0}
             >
               {state().submitting
-                ? "submitting…"
+                ? "提交中…"
                 : unsupported()
-                  ? "esc dismiss"
+                  ? "esc 关闭"
                   : confirm()
-                    ? "enter submit   esc dismiss"
+                    ? "回车 提交   esc 关闭"
                     : editing()
-                      ? "enter save   esc dismiss"
+                      ? "回车 保存   esc 关闭"
                       : externalField()
-                        ? `enter ${action()}   esc dismiss`
+                        ? `回车 ${action()}   esc 关闭`
                         : props.mono
-                          ? "up/down select   enter choose   tab next   esc dismiss"
-                          : "↑↓ select   enter choose   tab next   esc dismiss"}
+                          ? "up/down 选择   回车 选择   tab 下一条   esc 关闭"
+                          : "↑↓ 选择   回车 选择   tab 下一条   esc 关闭"}
             </text>
             <Show when={state().error}>
               <text fg={props.theme.error} wrapMode="none" truncate flexShrink={1}>
@@ -625,18 +625,18 @@ export function RunFormBody(props: {
               wrapMode="none"
               flexShrink={0}
             >
-              {state().submitting ? "submitting…" : `enter ${action()}`}
+              {state().submitting ? "提交中…" : `回车 ${action()}`}
             </text>
           </Show>
           <Show when={!state().submitting}>
             <text height={1} fg={props.theme.muted} wrapMode="none" flexShrink={0}>
-              esc dismiss
+              esc 关闭
             </text>
           </Show>
           <Show when={!state().submitting && size().height >= 10}>
             <text fg={props.theme.muted} wrapMode="word" maxWidth="100%" flexShrink={0}>
-              {size().width >= 56 && rows().length > 0 && !state().editing ? "up/down select  tab next  " : ""}pgup/pgdn
-              scroll
+              {size().width >= 56 && rows().length > 0 && !state().editing ? "up/down 选择  tab 下一条  " : ""}pgup/pgdn
+              滚动
             </text>
           </Show>
         </box>

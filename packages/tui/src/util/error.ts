@@ -22,26 +22,26 @@ export function cliErrorMessage(input: unknown): string | undefined {
       ? model.suggestions.filter((item): item is string => typeof item === "string")
       : []
     return [
-      `Model not found: ${field(model, "providerID")}/${field(model, "modelID")}`,
-      ...(suggestions.length ? ["Did you mean: " + suggestions.join(", ")] : []),
-      "Try: `opencode models` to list available models",
-      "Or check your config (opencode.json) provider/model names",
+      `未找到模型：${field(model, "providerID")}/${field(model, "modelID")}`,
+      ...(suggestions.length ? ["是否想找：" + suggestions.join(", ")] : []),
+      "试试：`opencode models` 列出可用模型",
+      "或检查你的配置（opencode.json）中的 provider/model 名称",
     ].join("\n")
   }
 
   const provider = configData(input, "ProviderInitError")
   if (provider)
-    return `Failed to initialize provider "${field(provider, "providerID")}". Check credentials and configuration.`
+    return `初始化提供商 "${field(provider, "providerID")}" 失败。请检查凭据和配置。`
 
   const json = configData(input, "ConfigJsonError")
   if (json) {
     const message = field(json, "message")
-    return `Config file at ${field(json, "path")} is not valid JSON(C)` + (message ? `: ${message}` : "")
+    return `配置文件 ${field(json, "path")} 不是有效的 JSON(C)` + (message ? `：${message}` : "")
   }
 
   const directory = configData(input, "ConfigDirectoryTypoError")
   if (directory) {
-    return `Directory "${field(directory, "dir")}" in ${field(directory, "path")} is not valid. Rename the directory to "${field(directory, "suggestion")}" or remove it. This is a common typo.`
+    return `目录 "${field(directory, "dir")}"（位于 ${field(directory, "path")}）无效。请将目录重命名为 "${field(directory, "suggestion")}" 或删除它。这是常见的拼写错误。`
   }
 
   const frontmatter = configData(input, "ConfigFrontmatterError")
@@ -62,7 +62,7 @@ export function cliErrorMessage(input: unknown): string | undefined {
         })
       : []
     return [
-      `Configuration is invalid${path && path !== "config" ? ` at ${path}` : ""}` + (message ? `: ${message}` : ""),
+      `配置无效${path && path !== "config" ? `，位置：${path}` : ""}` + (message ? `：${message}` : ""),
       ...issues.map((issue) => "↳ " + issue.message + " " + issue.path.join(".")),
     ].join("\n")
   }
@@ -137,5 +137,5 @@ export function errorMessage(error: unknown): string {
 
   const formatted = errorFormat(error)
   if (formatted) return formatted
-  return "unknown error"
+  return "未知错误"
 }

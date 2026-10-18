@@ -28,11 +28,11 @@ export function Reconnecting(props: { managed?: boolean }) {
         paddingRight={2}
         gap={1}
       >
-        <Spinner color={theme.text.base}>{props.managed ? "Restarting service…" : "Connection lost…"}</Spinner>
+        <Spinner color={theme.text.base}>{props.managed ? "正在重启服务…" : "连接已断开…"}</Spinner>
         <text fg={theme.text.muted}>
           {props.managed
-            ? "Your session will resume automatically."
-            : "Reconnecting to the server automatically."}
+            ? "你的会话将自动恢复。"
+            : "正在自动重新连接服务器。"}
         </text>
       </box>
     </box>

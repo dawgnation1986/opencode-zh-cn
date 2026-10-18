@@ -111,14 +111,14 @@ export function DialogSessionList() {
   const searchState = createMemo(() => {
     const query = filter().trim()
     if (query !== search().trim() || searchResults.loading)
-      return { message: query ? "Searching sessions…" : "Loading sessions…", error: false }
+      return { message: query ? "正在搜索会话…" : "正在加载会话…", error: false }
     const result = searchResults()
     if (result?.query === query && result.error)
       return {
-        message: query ? "Could not search sessions. Change the search to try again." : "Could not load sessions.",
+        message: query ? "无法搜索会话。请修改搜索内容后重试。" : "无法加载会话。",
         error: true,
       }
-    return { message: query ? "No sessions found" : "No sessions available", error: false }
+    return { message: query ? "未找到会话" : "暂无可用会话", error: false }
   })
 
   const quickSwitchHint = createMemo(() => {
@@ -130,7 +130,7 @@ export function DialogSessionList() {
   })
   const quickSwitchFooterHints = createMemo(() => {
     const hint = quickSwitchHint()
-    return hint && local.session.slots().length > 0 ? [{ title: "switch", label: hint }] : []
+    return hint && local.session.slots().length > 0 ? [{ title: "切换", label: hint }] : []
   })
   const currentProjectName = createMemo(() => {
     const current = data.location.info(pickerLocation())
@@ -164,7 +164,7 @@ export function DialogSessionList() {
       const attention = sessionTabs.status(session.id).attention
       return {
         title: deleting
-          ? `Press ${shortcuts.get("session.delete")} again to confirm`
+          ? `再次按 ${shortcuts.get("session.delete")} 确认`
           : withTimestampedFallback(session),
         value: session.id,
         category,
@@ -186,30 +186,30 @@ export function DialogSessionList() {
       .filter((session) => !session.parentID && !pinnedSet.has(session.id))
       .map((session) => {
         const date = new Date(session.time.updated).toDateString()
-        return option(session, date === today ? "Today" : date)
+        return option(session, date === today ? "今天" : date)
       })
 
-    return [...pinned.map((sessionID) => option(sessionMap.get(sessionID)!, "Pinned")), ...remaining]
+    return [...pinned.map((sessionID) => option(sessionMap.get(sessionID)!, "已固定")), ...remaining]
   })
 
   onMount(() => dialog.setSize("large"))
 
   return (
     <DialogSelect
-      title="Sessions"
+      title="会话"
       titleView={
         <box flexDirection="row">
           <text fg={theme.text.base} attributes={TextAttributes.BOLD}>
-            Sessions
+            会话
           </text>
           <Show when={!allProjects() && currentProjectName()}>
-            <text fg={theme.text.muted}> for {currentProjectName()}</text>
+            <text fg={theme.text.muted}>（{currentProjectName()}）</text>
           </Show>
         </box>
       }
       searchInTitle
       titlePlaceholder={
-        !allProjects() && currentProjectName() ? `Search sessions in ${currentProjectName()}` : "Search sessions"
+        !allProjects() && currentProjectName() ? `在 ${currentProjectName()} 中搜索会话` : "搜索会话"
       }
       options={options()}
       skipFilter={true}
@@ -221,7 +221,7 @@ export function DialogSessionList() {
       bindings={[
         {
           bind: "ctrl+a",
-          title: allProjects() ? "Show current directory sessions" : "Show all project sessions",
+          title: allProjects() ? "显示当前目录的会话" : "显示所有项目的会话",
           group: "Dialog",
           run: () => {
             void updatePrefs((draft) => {
@@ -252,13 +252,13 @@ export function DialogSessionList() {
       actions={[
         {
           command: "session.pin.toggle",
-          title: "pin/unpin",
+          title: "固定/取消固定",
           hidden: sessionTabs.enabled(),
           onTrigger: (option) => local.session.togglePin(option.value),
         },
         {
           command: "session.delete",
-          title: "delete",
+          title: "删除",
           onTrigger: (option: { value: string }) => {
             if (toDelete() !== option.value) {
               setToDelete(option.value)
@@ -276,7 +276,7 @@ export function DialogSessionList() {
               .catch((error) => {
                 setToDelete(undefined)
                 toast.show({
-                  message: `Failed to delete session: ${errorMessage(error)}`,
+                  message: `删除会话失败：${errorMessage(error)}`,
                   variant: "error",
                   duration: 5000,
                 })
@@ -285,14 +285,14 @@ export function DialogSessionList() {
         },
         {
           command: "session.rename",
-          title: "rename",
+          title: "重命名",
           onTrigger: (option: { value: string; title: string }) =>
             DialogSessionRename.show(dialog, option.value, option.title),
         },
       ]}
       footerHints={[
         ...(newDesigns() ? [] : quickSwitchFooterHints()),
-        { title: allProjects() ? "current directory" : "all projects", label: "ctrl+a", side: "right" },
+        { title: allProjects() ? "当前目录" : "所有项目", label: "ctrl+a", side: "right" },
       ]}
     />
   )
@@ -301,7 +301,7 @@ export function DialogSessionList() {
 function quickSwitchRange(first: string, last: string) {
   const prefix = first.slice(0, -1)
   if (first.endsWith("1") && last === `${prefix}9`) return `${prefix}1-9`
-  return `${first} through ${last}`
+  return `${first} 到 ${last}`
 }
 
 export function sessionStatusGutter(

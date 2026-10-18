@@ -30,14 +30,14 @@ export function DiffViewerImage(props: {
 
   return (
     <box width="100%" flexShrink={0} gap={1} paddingLeft={1} paddingRight={1} paddingBottom={1}>
-      <text fg={theme.text.muted}>{props.label ?? "Working tree preview"}</text>
+      <text fg={theme.text.muted}>{props.label ?? "工作区预览"}</text>
       <box height={height() + 2} flexShrink={0} gap={1}>
         <Switch>
           <Match when={image.error}>
-            <text fg={theme.text.feedback.error.base}>Could not load image</text>
+            <text fg={theme.text.feedback.error.base}>无法加载图片</text>
           </Match>
           <Match when={image.loading}>
-            <text fg={theme.text.muted}>Loading image…</text>
+            <text fg={theme.text.muted}>正在加载图片…</text>
           </Match>
           <Match when={!image.error && image()} keyed>
             {(bytes) => {
@@ -61,7 +61,7 @@ export function DiffViewerImage(props: {
               return (
                 <Show
                   when={!failed()}
-                  fallback={<text fg={theme.text.feedback.error.base}>Could not decode image</text>}
+                  fallback={<text fg={theme.text.feedback.error.base}>无法解码图片</text>}
                 >
                   <box width="100%" height={height()} onMouseUp={open}>
                     <image
@@ -80,7 +80,7 @@ export function DiffViewerImage(props: {
                       <box flexDirection="row" justifyContent="space-between">
                         <text fg={theme.text.muted}>{value()}</text>
                         <text fg={theme.text.action.secondary.base} onMouseUp={open}>
-                          Click to enlarge
+                          点击放大
                         </text>
                       </box>
                     )}

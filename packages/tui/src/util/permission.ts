@@ -35,7 +35,7 @@ export function permissionPresentation(
     const diff = text(first.patch) || text(first.diff) || text(metadata.diff) || undefined
     return {
       icon: "→",
-      title: `Edit ${formatPath(file)}`,
+      title: `编辑 ${formatPath(file)}`,
       lines: [],
       diff,
       patch: diff ? undefined : text(input.patchText) || undefined,
@@ -45,11 +45,11 @@ export function permissionPresentation(
 
   if (action === "read" || action === "list") {
     const value = text(input.path) || resources[0] || ""
-    const title = action === "read" ? "Read" : "List"
+    const title = action === "read" ? "读取" : "列出"
     return {
       icon: "→",
       title: `${title} ${formatPath(value)}`,
-      lines: value ? [`Path: ${formatPath(value)}`] : [],
+      lines: value ? [`路径：${formatPath(value)}`] : [],
     }
   }
 
@@ -59,7 +59,7 @@ export function permissionPresentation(
     return {
       icon: "✱",
       title: `${title} "${pattern}"`,
-      lines: pattern ? [`Pattern: ${pattern}`] : [],
+      lines: pattern ? [`模式：${pattern}`] : [],
     }
   }
 
@@ -67,7 +67,7 @@ export function permissionPresentation(
     const command = text(input.command)
     return {
       icon: "#",
-      title: "Shell command",
+      title: "Shell 命令",
       lines: command ? [`$ ${command}`] : resources.map((item) => `- ${item}`),
     }
   }
@@ -77,7 +77,7 @@ export function permissionPresentation(
     const description = text(input.description)
     return {
       icon: "#",
-      title: `${Locale.titlecase(agent)} Subagent`,
+      title: `${Locale.titlecase(agent)} 子代理`,
       lines: description ? [`◉ ${description}`] : [],
     }
   }
@@ -97,7 +97,7 @@ export function permissionPresentation(
     return {
       icon: "◈",
       title: query ? `${title} "${query}"` : title,
-      lines: query ? [`Query: ${query}`] : [],
+      lines: query ? [`查询：${query}`] : [],
     }
   }
 
@@ -111,9 +111,9 @@ export function permissionPresentation(
       icon: "→",
       title: `LSP ${operation}${file ? ` ${formatPath(file)}${position ? `:${position}` : ""}` : ""}`,
       lines: [
-        ...(input.operation ? [`Operation: ${operation}`] : []),
-        ...(file ? [`Path: ${formatPath(file)}`] : []),
-        ...(position ? [`Position: ${position}`] : []),
+        ...(input.operation ? [`操作：${operation}`] : []),
+        ...(file ? [`路径：${formatPath(file)}`] : []),
+        ...(position ? [`位置：${position}`] : []),
       ],
     }
   }
@@ -123,7 +123,7 @@ export function permissionPresentation(
     const directory = wildcardDirectory(raw)
     return {
       icon: "←",
-      title: `Access external directory ${formatPath(directory)}`,
+      title: `访问外部目录 ${formatPath(directory)}`,
       lines: resources.map((item) => `- ${item}`),
     }
   }
@@ -131,15 +131,15 @@ export function permissionPresentation(
   if (action === "doom_loop") {
     return {
       icon: "⟳",
-      title: "Continue after repeated failures",
-      lines: ["This keeps the session running despite repeated failures."],
+      title: "在反复失败后继续",
+      lines: ["即使反复失败，也会保持会话继续运行。"],
     }
   }
 
   return {
     icon: "⚙",
-    title: `Call tool ${source.action}`,
-    lines: [`Tool: ${source.action}`],
+    title: `调用工具 ${source.action}`,
+    lines: [`工具：${source.action}`],
   }
 }
 
@@ -154,17 +154,17 @@ function wildcardDirectory(value: string) {
 export function permissionAlwaysLines(input: { action: string; save?: ReadonlyArray<string> }): string[] {
   const save = input.save ?? []
   if (save.length === 1 && save[0] === "*") {
-    return [`This will always allow ${input.action} for this project.`]
+    return [`将对此项目始终允许 ${input.action}。`]
   }
-  return ["This will always allow the following patterns for this project.", ...save.map((item) => `- ${item}`)]
+  return ["将对此项目始终允许以下模式。", ...save.map((item) => `- ${item}`)]
 }
 
 export function permissionOptionLabel(option: "once" | "always" | "reject" | "confirm" | "cancel") {
-  if (option === "once") return "Allow once"
-  if (option === "always") return "Always allow"
-  if (option === "reject") return "Reject"
-  if (option === "confirm") return "Confirm"
-  return "Cancel"
+  if (option === "once") return "仅允许一次"
+  if (option === "always") return "始终允许"
+  if (option === "reject") return "拒绝"
+  if (option === "confirm") return "确认"
+  return "取消"
 }
 
 function normalizeInput(action: string, value: unknown): Dict {

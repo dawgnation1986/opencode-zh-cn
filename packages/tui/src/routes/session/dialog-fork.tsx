@@ -44,7 +44,7 @@ export function DialogFork(props: { sessionID: string; messageID?: string; onMov
         : undefined,
     })
     dialog.clear()
-    toast.show({ message: "Forked session", variant: "success", duration: 4000 })
+    toast.show({ message: "已派生会话", variant: "success", duration: 4000 })
   }
 
   onMount(() => {
@@ -54,7 +54,7 @@ export function DialogFork(props: { sessionID: string; messageID?: string; onMov
 
   const options = createMemo((): DialogSelectOption<string | undefined>[] => [
     {
-      title: "Full session",
+      title: "完整会话",
       value: undefined,
       onSelect: () => fork(),
     },
@@ -74,12 +74,12 @@ export function DialogFork(props: { sessionID: string; messageID?: string; onMov
     <Show
       when={!pending()}
       fallback={
-        <DialogLayout inset={DIALOG_LIST_INSET} header={<DialogHeader title="Fork session" />}>
-          <Spinner>Forking session…</Spinner>
+        <DialogLayout inset={DIALOG_LIST_INSET} header={<DialogHeader title="派生会话" />}>
+          <Spinner>正在派生会话…</Spinner>
         </DialogLayout>
       }
     >
-      <DialogSelect onMove={(option) => props.onMove?.(option.value)} title="Fork session" options={options()} />
+      <DialogSelect onMove={(option) => props.onMove?.(option.value)} title="派生会话" options={options()} />
     </Show>
   )
 }

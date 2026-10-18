@@ -124,7 +124,7 @@ function GroupContent(props: GroupProps) {
       ([name, count]) =>
         `${count} ${count === 1 ? name : name === "search" || name === "fetch" ? `${name}es` : `${name}s`}`,
     )
-    return `${completed() ? "Explored" : "Exploring"}: ${names.join(", ")}`
+    return `${completed() ? "已探索" : "正在探索"}: ${names.join(", ")}`
   })
   const toggle = () => disclosure.toggle()
   const children = (mode: "normal" | "thought" | "tool") => (
@@ -176,15 +176,15 @@ function GroupContent(props: GroupProps) {
                       )
               }
               complete={props.completed}
-              pending={latest() ? `Thinking: ${latest()}` : "Thinking"}
+              pending={latest() ? `思考中：${latest()}` : "思考中"}
               spinner={!props.completed}
               onMouseOver={() => setHover(true)}
               onMouseOut={() => setHover(false)}
               onMouseUp={toggle}
             >
-              {props.completed ? "Thought" : latest() ? `Thinking: ${latest()}` : "Thinking"}
+              {props.completed ? "思考" : latest() ? `思考中：${latest()}` : "思考中"}
               <Show when={props.completed && !expanded() && latest()}>: {latest()}</Show>
-              <Show when={props.completed && thoughts().length > 1}> · {thoughts().length} steps</Show>
+              <Show when={props.completed && thoughts().length > 1}> · {thoughts().length} 步</Show>
               <Show when={props.completed && duration()}> · {Locale.duration(duration())}</Show>
             </InlineToolRow>
             <Show when={expanded()}>
@@ -255,7 +255,7 @@ function InstructionsGroup(props: GroupProps) {
         onMouseOut={() => setHover(false)}
         onMouseUp={() => disclosure.toggle()}
       >
-        Instructions: {files()} {files() === 1 ? "file" : "files"}
+        指令： {files()} {files() === 1 ? "个文件" : "个文件"}
       </InlineToolRow>
       <Show when={disclosure.expanded()}>
         <Children {...props} nodes={props.node.children} mode="normal" />

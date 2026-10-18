@@ -65,7 +65,7 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
         .catch((cause: unknown) => {
           if (disposed) return
           missing = isShellNotFoundError(cause)
-          setError(missing ? "Shell output is no longer available." : "Unable to read shell output. Retrying…")
+          setError(missing ? "Shell 输出已不再可用。" : "无法读取 Shell 输出，正在重试…")
         })
         .then((more) => {
           // Poll only while the viewer is open, including after exit so the final
@@ -81,21 +81,21 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
   })
 
   const status = () => {
-    if (info().status === "running") return "Running"
-    if (info().status === "timeout") return "Timed out"
-    if (info().status === "killed") return "Killed"
-    return info().exit === undefined ? "Exited" : `Exited · code ${info().exit}`
+    if (info().status === "running") return "运行中"
+    if (info().status === "timeout") return "已超时"
+    if (info().status === "killed") return "已终止"
+    return info().exit === undefined ? "已退出" : `已退出 · 退出码 ${info().exit}`
   }
 
   Keymap.createLayer(() => ({
     mode: "modal",
     commands: [
-      { bind: "up", title: "Scroll output up", group: "Shell", run: () => scroll?.scrollBy(-1) },
-      { bind: "down", title: "Scroll output down", group: "Shell", run: () => scroll?.scrollBy(1) },
-      { bind: "pageup", title: "Previous output page", group: "Shell", run: () => scroll?.scrollBy(-height()) },
-      { bind: "pagedown", title: "Next output page", group: "Shell", run: () => scroll?.scrollBy(height()) },
-      { bind: "home", title: "First loaded output", group: "Shell", run: () => scroll?.scrollTo(0) },
-      { bind: "end", title: "Follow shell output", group: "Shell", run: () => scroll?.scrollTo(Infinity) },
+      { bind: "up", title: "向上滚动输出", group: "Shell", run: () => scroll?.scrollBy(-1) },
+      { bind: "down", title: "向下滚动输出", group: "Shell", run: () => scroll?.scrollBy(1) },
+      { bind: "pageup", title: "上一页输出", group: "Shell", run: () => scroll?.scrollBy(-height()) },
+      { bind: "pagedown", title: "下一页输出", group: "Shell", run: () => scroll?.scrollBy(height()) },
+      { bind: "home", title: "已加载输出的开头", group: "Shell", run: () => scroll?.scrollTo(0) },
+      { bind: "end", title: "跟随 Shell 输出", group: "Shell", run: () => scroll?.scrollTo(Infinity) },
     ],
   }))
 
@@ -106,7 +106,7 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
           gap={dimensions().width < 60 ? 1 : 2}
           titleView={
             <text fg={theme.text.base} attributes={TextAttributes.BOLD} flexGrow={1}>
-              Shell output
+              Shell 输出
             </text>
           }
         >
@@ -117,9 +117,9 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
         <DialogFooter
           actions={{
             secondary: [
-              { title: "scroll", key: "↑/↓" },
-              { title: "follow", key: "end" },
-              { title: "back", key: "esc" },
+              { title: "滚动", key: "↑/↓" },
+              { title: "跟随", key: "end" },
+              { title: "返回", key: "esc" },
             ],
           }}
         />
@@ -130,7 +130,7 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
           {props.shell.command}
         </text>
         <Show when={omitted()}>
-          <text fg={theme.text.muted}>Earlier output omitted · showing recent output</text>
+          <text fg={theme.text.muted}>已省略较早的输出 · 仅显示最近输出</text>
         </Show>
         <scrollbox
           id="shell-output-scroll"
@@ -143,8 +143,8 @@ export function DialogShellOutput(props: { shell: ShellInfo; location: LocationR
           <text fg={theme.text.base} wrapMode="word">
             {text() ||
               (output() === undefined
-                ? "Loading output…"
-                : "No captured output. Output redirected to files is not shown here.")}
+                ? "正在加载输出…"
+                : "未捕获到输出。重定向到文件的输出不会在此显示。")}
           </text>
         </scrollbox>
         <Show when={error()}>

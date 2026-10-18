@@ -234,7 +234,7 @@ export function PluginProvider(props: ParentProps<{ packages: PackageSource; dir
   // vanish either: the old generation may still own listeners or intervals.
   const deactivateNoisily = (id: string) =>
     deactivate(id).catch((error) =>
-      host.toast.show({ variant: "error", title: "Plugin", message: `${id}: cleanup failed: ${errorMessage(error)}` }),
+      host.toast.show({ variant: "error", title: "插件", message: `${id}: cleanup failed: ${errorMessage(error)}` }),
     )
 
   // Every lifecycle mutation — reconciles, manual dialog toggles, shutdown —

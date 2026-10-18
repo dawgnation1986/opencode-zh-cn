@@ -22,30 +22,30 @@ export function DialogHighlights(props: { version: string; items: ReadonlyArray<
   Keymap.createLayer(() => ({
     mode: "modal",
     commands: [
-      { bind: "return", title: "Close highlights", group: "Dialog", run: () => dialog.clear() },
-      ...["up", "k"].map((bind) => ({ bind, title: "Scroll up", group: "Dialog", run: () => scroll?.scrollBy(-1) })),
-      ...["down", "j"].map((bind) => ({ bind, title: "Scroll down", group: "Dialog", run: () => scroll?.scrollBy(1) })),
-      { bind: "pageup", title: "Previous page", group: "Dialog", run: () => scroll?.scrollBy(-maxHeight()) },
-      { bind: "pagedown", title: "Next page", group: "Dialog", run: () => scroll?.scrollBy(maxHeight()) },
-      { bind: "home", title: "Scroll to top", group: "Dialog", run: () => scroll?.scrollTo(0) },
-      { bind: "end", title: "Scroll to bottom", group: "Dialog", run: () => scroll?.scrollTo(Infinity) },
+      { bind: "return", title: "关闭更新内容", group: "Dialog", run: () => dialog.clear() },
+      ...["up", "k"].map((bind) => ({ bind, title: "向上滚动", group: "Dialog", run: () => scroll?.scrollBy(-1) })),
+      ...["down", "j"].map((bind) => ({ bind, title: "向下滚动", group: "Dialog", run: () => scroll?.scrollBy(1) })),
+      { bind: "pageup", title: "上一页", group: "Dialog", run: () => scroll?.scrollBy(-maxHeight()) },
+      { bind: "pagedown", title: "下一页", group: "Dialog", run: () => scroll?.scrollBy(maxHeight()) },
+      { bind: "home", title: "滚动到顶部", group: "Dialog", run: () => scroll?.scrollTo(0) },
+      { bind: "end", title: "滚动到底部", group: "Dialog", run: () => scroll?.scrollTo(Infinity) },
     ],
   }))
 
   return (
     <DialogLayout
-      header={<DialogHeader title={`What's new in ${props.version}`} />}
-      footer={{ actions: { primary: [{ title: "ok", key: "enter", onTrigger: () => dialog.clear() }] } }}
+      header={<DialogHeader title={`版本 ${props.version} 更新内容`} />}
+      footer={{ actions: { primary: [{ title: "确定", key: "enter", onTrigger: () => dialog.clear() }] } }}
       legacyFooter={
         <box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <DialogFooter actions={{ secondary: [{ title: "scroll", key: "↑/↓" }] }} />
+          <DialogFooter actions={{ secondary: [{ title: "滚动", key: "↑/↓" }] }} />
           <box
             paddingLeft={3}
             paddingRight={3}
             backgroundColor={theme.background.action.primary.focused}
             onMouseUp={() => dialog.clear()}
           >
-            <text fg={theme.text.action.primary.focused}>ok</text>
+            <text fg={theme.text.action.primary.focused}>确定</text>
           </box>
         </box>
       }

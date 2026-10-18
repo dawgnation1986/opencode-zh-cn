@@ -35,19 +35,19 @@ export function DialogConfirm(props: DialogConfirmProps) {
     mode: "modal",
     commands: newDesigns()
       ? [
-          { bind: "return", title: "Confirm", group: "Dialog", run: () => choose("confirm") },
-          { bind: "escape", title: "Cancel", group: "Dialog", run: () => choose("cancel") },
+          { bind: "return", title: "确定", group: "Dialog", run: () => choose("confirm") },
+          { bind: "escape", title: "取消", group: "Dialog", run: () => choose("cancel") },
         ]
       : [
           {
             bind: "return",
-            title: "Confirm dialog selection",
+            title: "确认弹窗选择",
             group: "Dialog",
             run: () => choose(store.active),
           },
           {
             bind: "left",
-            title: "Previous dialog option",
+            title: "上一个选项",
             group: "Dialog",
             run: () => {
               setStore("active", store.active === "confirm" ? "cancel" : "confirm")
@@ -55,7 +55,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
           },
           {
             bind: "right",
-            title: "Next dialog option",
+            title: "下一个选项",
             group: "Dialog",
             run: () => {
               setStore("active", store.active === "confirm" ? "cancel" : "confirm")
@@ -70,9 +70,9 @@ export function DialogConfirm(props: DialogConfirmProps) {
         actions: {
           primary: [
             // Footer labels are lowercase; the legacy buttons title-case the same labels.
-            { title: (props.label?.cancel ?? "cancel").toLowerCase(), key: "esc", onTrigger: () => choose("cancel") },
+            { title: (props.label?.cancel ?? "取消").toLowerCase(), key: "esc", onTrigger: () => choose("cancel") },
             {
-              title: (props.label?.confirm ?? "confirm").toLowerCase(),
+              title: (props.label?.confirm ?? "确定").toLowerCase(),
               key: "enter",
               onTrigger: () => choose("confirm"),
             },
@@ -90,7 +90,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
                 onMouseUp={() => choose(key)}
               >
                 <text fg={key === store.active ? theme.text.action.primary.focused : theme.text.muted}>
-                  {Locale.titlecase(props.label?.[key] ?? key)}
+                  {Locale.titlecase(props.label?.[key] ?? (key === "cancel" ? "取消" : "确定"))}
                 </text>
               </box>
             )}

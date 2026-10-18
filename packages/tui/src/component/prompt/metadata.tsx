@@ -43,7 +43,7 @@ export function PromptMetadataRow(props: {
           {(agent) => <text fg={fade(props.highlight, props.agentAlpha)}>{agent()}</text>}
         </Show>
         <Show when={props.mode === "normal" && layout().auto}>
-          <text fg={fade(theme.text.muted, props.agentAlpha)}>auto</text>
+          <text fg={fade(theme.text.muted, props.agentAlpha)}>自动</text>
         </Show>
         <Show when={props.mode === "normal" && layout().model}>
           <box flexDirection="row" gap={1} flexGrow={1} flexShrink={1} minWidth={0}>
@@ -138,7 +138,7 @@ function promptMetadataLayout(input: {
 function text(input: Layout) {
   return [
     ...(input.agent ? [input.agent] : []),
-    ...(input.auto ? ["auto"] : []),
+    ...(input.auto ? ["自动"] : []),
     ...(input.model ? [...(input.agent ? ["·"] : []), input.model] : []),
     ...(input.provider ? [input.provider] : []),
     ...(input.variant ? ["·", input.variant] : []),

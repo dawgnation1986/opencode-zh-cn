@@ -69,7 +69,7 @@ export function DialogPrompt(props: DialogPromptProps) {
     commands: [
       {
         id: "dialog.prompt.submit",
-        title: "Submit dialog prompt",
+        title: "提交弹窗输入",
         group: "Dialog",
         run: confirm,
       },
@@ -89,7 +89,7 @@ export function DialogPrompt(props: DialogPromptProps) {
     commands: [
       {
         bind: "escape",
-        title: "Back",
+        title: "返回",
         group: "Dialog",
         run: () => {
           if (renderer.getSelection()) {
@@ -143,15 +143,15 @@ export function DialogPrompt(props: DialogPromptProps) {
         actions: {
           primary: [
             ...extraActions(),
-            { title: "submit", command: "dialog.prompt.submit", disabled: props.busy, onTrigger: confirm },
+            { title: "提交", command: "dialog.prompt.submit", disabled: props.busy, onTrigger: confirm },
           ],
         },
       }}
       legacyFooter={
-        <Show when={!props.busy} fallback={<text fg={theme.text.muted}>processing…</text>}>
+        <Show when={!props.busy} fallback={<text fg={theme.text.muted}>处理中…</text>}>
           <DialogFooter
             actions={{
-              secondary: [{ title: "submit", command: "dialog.prompt.submit", onTrigger: confirm }, ...extraActions()],
+              secondary: [{ title: "提交", command: "dialog.prompt.submit", onTrigger: confirm }, ...extraActions()],
             }}
           />
         </Show>
@@ -167,7 +167,7 @@ export function DialogPrompt(props: DialogPromptProps) {
             setTextareaTarget(val)
           }}
           initialValue={props.value}
-          placeholder={props.placeholder ?? "Enter text"}
+          placeholder={props.placeholder ?? "输入文本"}
           placeholderColor={newDesigns() ? theme.text.faint : theme.text.muted}
           textColor={props.busy ? theme.text.formfield.disabled : theme.text.formfield.base}
           focusedTextColor={props.busy ? theme.text.formfield.disabled : theme.text.formfield.base}
@@ -175,7 +175,7 @@ export function DialogPrompt(props: DialogPromptProps) {
           cursorStyle={config.cursor}
         />
         <Show when={props.busy}>
-          <Spinner color={theme.text.muted}>{props.busyText ?? "Working…"}</Spinner>
+          <Spinner color={theme.text.muted}>{props.busyText ?? "处理中…"}</Spinner>
         </Show>
       </box>
     </DialogLayout>

@@ -380,7 +380,7 @@ function TabContextMenu(props: { state: TabContextMenuState; tabs: SessionTabsCo
   onCleanup(Keymap.use().mode.push("menu"))
   Keymap.createLayer(() => ({
     mode: "menu",
-    commands: [{ bind: "escape,ctrl+c", title: "Close tab menu", group: "Tabs", run: props.onClose }],
+    commands: [{ bind: "escape,ctrl+c", title: "关闭标签页菜单", group: "Tabs", run: props.onClose }],
   }))
   const actions = createMemo<Array<{ title: string; run?: () => void }>>(() => {
     const sessionID = props.state.sessionID
@@ -391,29 +391,29 @@ function TabContextMenu(props: { state: TabContextMenuState; tabs: SessionTabsCo
       ...(sessionID
         ? [
             {
-              title: "Rename",
+              title: "重命名",
               run: () =>
                 props.tabs.rename ? props.tabs.rename(sessionID) : DialogSessionRename.show(dialog, sessionID, title),
             },
             {
-              title: "Copy session ID",
+              title: "复制会话 ID",
               run: () =>
                 void clipboard
                   .write(sessionID)
-                  .then(() => toast.show({ message: "Session ID copied to clipboard", variant: "info" }))
+                  .then(() => toast.show({ message: "会话 ID 已复制到剪贴板", variant: "info" }))
                   .catch(toast.error),
             },
-            { title: "Close", run: () => props.tabs.close(sessionID) },
+            { title: "关闭", run: () => props.tabs.close(sessionID) },
           ]
         : []),
       ...(!sessionID && props.tabs.reopen
         ? [
-            { title: "Recently closed tabs" },
+            { title: "最近关闭的标签页" },
             ...closed.map((tab) => ({
-              title: tab.title || "Untitled session",
+              title: tab.title || "未命名会话",
               run: () => props.tabs.reopen?.(tab.sessionID),
             })),
-            ...(closed.length === 0 ? [{ title: "No recently closed tabs" }] : []),
+            ...(closed.length === 0 ? [{ title: "没有最近关闭的标签页" }] : []),
           ]
         : []),
     ]
@@ -751,7 +751,7 @@ function VerticalSessionTabs(props: {
               const restingTitleWidth = () => Math.max(1, width() - prefixWidth() - 1)
               const hoveredTitleWidth = () => Math.max(1, restingTitleWidth() - 1)
               const titleWidth = () => (hovered() === tab.sessionID ? hoveredTitleWidth() : restingTitleWidth())
-              const title = () => (props.controller ? undefined : session()?.title) ?? tab.title ?? "Untitled session"
+              const title = () => (props.controller ? undefined : session()?.title) ?? tab.title ?? "未命名会话"
               const scrolling = () => marquee.active() === tab.sessionID
               const visibleTitleParts = createMemo(() =>
                 scrolling()
@@ -1260,7 +1260,7 @@ function VerticalSessionTabs(props: {
                 {Locale.truncateWidth(
                   data?.session.get(sessionID())?.title ??
                     items().find((tab) => tab.sessionID === sessionID())?.title ??
-                    "Untitled session",
+                    "未命名会话",
                   tooltipWidth() - 2,
                 )}
               </text>
@@ -1582,7 +1582,7 @@ function HorizontalSessionTabs(props: {
           const glowColor = createMemo(() => tint(background(), feedbackColor() ?? unreadColor(), glowLevel()))
           const glows = () =>
             Boolean(status().attention || (!selected() && !status().busy && status().unread !== undefined))
-          const title = () => data?.session.get(tab.sessionID)?.title ?? tab.title ?? "Untitled session"
+          const title = () => data?.session.get(tab.sessionID)?.title ?? tab.title ?? "未命名会话"
           const tabNumber = createMemo(() => items().findIndex((item) => item.sessionID === tab.sessionID) + 1)
           const numberWidth = () => Math.max(2, String(items().length).length)
           // Hovering reveals the close mark, so the title's right bound shifts left of it.

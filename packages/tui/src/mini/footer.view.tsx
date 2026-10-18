@@ -239,12 +239,12 @@ export function RunFooterView(props: RunFooterViewProps) {
   const footerStatus = createMemo(() => {
     const current = model()?.model ?? props.state().model.trim()
     const variant = props.currentVariant()
-    const details = [busy() ? "running" : "idle", `agent ${props.currentAgent()}`]
+    const details = [busy() ? "运行中" : "空闲", `代理 ${props.currentAgent()}`]
     if (current) details.push(variant ? `${current} ${variant}` : current)
     if (contextUsage()) details.push(contextUsage())
     if (cost()) details.push(cost())
-    if (queuedPrompts().length > 0) details.push(`${queuedPrompts().length} pending`)
-    if (activeTabs().length > 0) details.push(`${activeTabs().length} subagent${activeTabs().length === 1 ? "" : "s"}`)
+    if (queuedPrompts().length > 0) details.push(`${queuedPrompts().length} 待处理`)
+    if (activeTabs().length > 0) details.push(`${activeTabs().length} 子代理${activeTabs().length === 1 ? "" : ""}`)
     return details.join(props.mono ? " - " : " · ")
   })
   const permission = createMemo<Extract<FooterView, { type: "permission" }> | undefined>(() => {
@@ -332,7 +332,7 @@ export function RunFooterView(props: RunFooterViewProps) {
       )
       if (!error) return true
       props.onStatus(
-        `failed to ${failureLabel ?? (action === "cancel" ? "delete" : action)} pending prompt: ${errorMessage(error)}`,
+        `无法${failureLabel ?? (action === "cancel" ? "删除" : action)}待处理提示：${errorMessage(error)}`,
       )
       return false
     })
@@ -401,12 +401,12 @@ export function RunFooterView(props: RunFooterViewProps) {
   const statusText = createMemo(() => {
     if (exiting() || (busy() && armed())) {
       const key = exiting() ? clearShortcut() : interruptLabel()
-      const action = exiting() ? "exit" : "stop"
-      if (!key) return exiting() ? "Exit pending" : "Stop pending"
+      const action = exiting() ? "退出" : "停止"
+      if (!key) return exiting() ? "退出中" : "停止中"
       const phrases = [
-        `Press ${key} again to ${exiting() ? "exit" : "interrupt"}`,
-        `${key} again to ${exiting() ? "exit" : "interrupt"}`,
-        `${key} again: ${action}`,
+        `再按 ${key} 一次以${exiting() ? "退出" : "中断"}`,
+        `${key} 再次${exiting() ? "退出" : "中断"}`,
+        `${key} 再次：${action}`,
         `${key} ${action}`,
       ]
       return phrases.find((text) => stringWidth(text) <= statusWidth()) ?? phrases[phrases.length - 1]!
@@ -415,8 +415,8 @@ export function RunFooterView(props: RunFooterViewProps) {
     if (notice()) return notice()
     if (!footerDetails()) return shell() ? "Shell" : ""
     if (busy()) {
-      if (stateStatus() === "reconnecting") return "reconnecting"
-      return interruptLabel() ? `${interruptLabel()} stop` : "Running"
+      if (stateStatus() === "reconnecting") return "重连中"
+      return interruptLabel() ? `${interruptLabel()} 停止` : "运行中"
     }
     return stateStatus() || (shell() ? "Shell" : "")
   })
@@ -456,25 +456,25 @@ export function RunFooterView(props: RunFooterViewProps) {
     const items: Array<{ id: "queued" | "subagents" | "background"; key: string; label: string; expanded?: string }> =
       []
     if (queuedPrompts().length > 0 && queuedShortcut()) {
-      items.push({ id: "queued", key: queuedShortcut(), label: `${queuedPrompts().length} pending` })
+      items.push({ id: "queued", key: queuedShortcut(), label: `${queuedPrompts().length} 待处理` })
     }
     if (activeTabs().length > 0 && subagentShortcut()) {
       items.push({
         id: "subagents",
         key: subagentShortcut(),
-        label: `${activeTabs().length} sub`,
-        expanded: `${activeTabs().length} subagent${activeTabs().length === 1 ? "" : "s"}`,
+        label: `${activeTabs().length} 子代理`,
+        expanded: `${activeTabs().length} 子代理${activeTabs().length === 1 ? "" : ""}`,
       })
     }
     if (foregroundSubagents() && backgroundShortcut()) {
-      items.push({ id: "background", key: backgroundShortcut(), label: "bg", expanded: "background" })
+      items.push({ id: "background", key: backgroundShortcut(), label: "后台", expanded: "后台" })
     }
     return items
   })
   const commandHint = createMemo(() => {
     if (!prompt() || takeover() || shell()) return
     if (command()) {
-      return { key: command(), label: "menu" }
+      return { key: command(), label: "菜单" }
     }
   })
   const statuslineLayout = createMemo(() => {
@@ -484,16 +484,16 @@ export function RunFooterView(props: RunFooterViewProps) {
       mono: props.mono,
       status: {
         text: statusText(),
-        expanded: footerDetails() && busy() && interruptLabel() ? `${interruptLabel()} interrupt` : undefined,
+        expanded: footerDetails() && busy() && interruptLabel() ? `${interruptLabel()} 中断` : undefined,
       },
-      escape: shell() && !takeover() ? { key: "esc", label: "normal" } : undefined,
+      escape: shell() && !takeover() ? { key: "esc", label: "普通" } : undefined,
       work: contextHintCandidates(),
       model: info ? { name: info.model, variant: info.variant } : undefined,
       agent: agentStatus(),
       context:
         footerDetails() && contextUsage()
           ? {
-              compact: usage()?.percent === undefined ? contextUsage() : `${usage()!.percent}% ctx`,
+              compact: usage()?.percent === undefined ? contextUsage() : `${usage()!.percent}% 上下文`,
               full: contextUsage(),
             }
           : undefined,
@@ -551,7 +551,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "app.clear",
-        title: "Clear screen",
+        title: "清屏",
         group: "System",
         run: clearScreen,
       },
@@ -563,13 +563,13 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "command.palette.show",
-        title: "Open command palette",
+        title: "打开命令面板",
         group: "Prompt",
         run: openCommand,
       },
       {
         id: "variant.cycle",
-        title: "Cycle model variant",
+        title: "切换模型变体",
         group: "Model",
         run: props.onCycle,
       },
@@ -582,7 +582,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "session.background",
-        title: "Background subagents",
+        title: "将子代理转入后台",
         group: "Session",
         run: () => props.onBackground?.(),
       },
@@ -594,7 +594,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "session.child.first",
-        title: "View subagents",
+        title: "查看子代理",
         group: "Session",
         run: openSubagentMenu,
       },
@@ -606,7 +606,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "session.queued_prompts",
-        title: "View pending prompts",
+        title: "查看待处理提示",
         group: "Prompt",
         run: openQueuedMenu,
       },
@@ -623,7 +623,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     commands: [
       {
         id: "composer.subagent.interrupt",
-        title: "Interrupt subagent",
+        title: "中断子代理",
         group: "Session",
         run: () => {
           const current = selectedTab()
@@ -802,7 +802,7 @@ export function RunFooterView(props: RunFooterViewProps) {
                             onUndo={async (item) => {
                               const current = composer.current()
                               if (current.mode === "shell" && current.text) {
-                                props.onStatus("leave shell mode before undoing a queued prompt")
+                                props.onStatus("撤销待处理提示前请先退出 Shell 模式")
                                 return
                               }
                               if (!(await queuedPromptAction("cancel", item.messageID, "undo"))) return

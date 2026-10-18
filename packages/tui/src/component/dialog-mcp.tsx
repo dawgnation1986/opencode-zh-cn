@@ -19,18 +19,18 @@ function statusError(status: McpServer["status"]) {
 
 function Status(props: { status: McpServer["status"]; loading: boolean }) {
   if (props.loading || props.status.status === "pending") {
-    return <>Connecting …</>
+    return <>连接中 …</>
   }
   if (props.status.status === "connected") {
-    return <span style={{ attributes: TextAttributes.BOLD }}>Connected ✓</span>
+    return <span style={{ attributes: TextAttributes.BOLD }}>已连接 ✓</span>
   }
   if (props.status.status === "failed") {
-    return <>Failed !</>
+    return <>失败 !</>
   }
   if (props.status.status === "needs_auth") {
-    return <>Sign in required →</>
+    return <>需要登录 →</>
   }
-  return <>Disabled ○</>
+  return <>已禁用 ○</>
 }
 
 export function DialogMcp(props: { initialServer?: string; details?: boolean } = {}) {
@@ -84,10 +84,10 @@ export function DialogMcp(props: { initialServer?: string; details?: boolean } =
 
   const toggleTitle = createMemo(() => {
     const status = focusedServer()?.status.status
-    if (status === "connected") return "disconnect"
-    if (status === "failed") return "retry"
-    if (status === "needs_auth") return "sign in"
-    return "connect"
+    if (status === "connected") return "断开连接"
+    if (status === "failed") return "重试"
+    if (status === "needs_auth") return "登录"
+    return "连接"
   })
 
   const focusedError = createMemo(() => {
@@ -137,9 +137,9 @@ export function DialogMcp(props: { initialServer?: string; details?: boolean } =
         when={detail()}
         fallback={
           <DialogSelect
-            title="MCP servers"
+            title="MCP 服务器"
             searchInTitle
-            titlePlaceholder="Search MCP servers"
+            titlePlaceholder="搜索 MCP 服务器"
             options={options()}
             preserveSelection
             onMove={(option) => setFocused(option.value as string)}
@@ -154,16 +154,16 @@ export function DialogMcp(props: { initialServer?: string; details?: boolean } =
                 },
               },
             ]}
-            footerHints={focusedError() ? [{ title: "view error", label: "enter", group: "primary" }] : []}
+            footerHints={focusedError() ? [{ title: "查看错误", label: "enter", group: "primary" }] : []}
           />
         }
       >
         {(server) => (
           <DialogErrorDetails
-            title={`MCP server: ${server().name}`}
-            error={statusError(server().status) ?? "Unknown MCP connection error"}
-            context={`Status: ${server().status.status}\nConfiguration: mcp.servers.${server().name}${
-              server().integrationID ? `\nIntegration: ${server().integrationID}` : ""
+            title={`MCP 服务器：${server().name}`}
+            error={statusError(server().status) ?? "未知的 MCP 连接错误"}
+            context={`状态：${server().status.status}\n配置：mcp.servers.${server().name}${
+              server().integrationID ? `\n集成：${server().integrationID}` : ""
             }`}
             onBack={() => {
               setDetail(undefined)

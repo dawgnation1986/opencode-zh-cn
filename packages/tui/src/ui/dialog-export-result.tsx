@@ -31,7 +31,7 @@ export function DialogExportResult(props: { path: string; onClose?: () => void }
     commands: [
       {
         bind: "return",
-        title: "Close export result",
+        title: "关闭导出结果",
         group: "Dialog",
         run: close,
       },
@@ -41,18 +41,18 @@ export function DialogExportResult(props: { path: string; onClose?: () => void }
   Keymap.createLayer(() => ({
     mode: "modal",
     enabled: newDesigns(),
-    commands: [{ bind: "c", title: "Copy export path", group: "Dialog", run: copy }],
+    commands: [{ bind: "c", title: "复制导出路径", group: "Dialog", run: copy }],
   }))
 
   return (
     <DialogLayout
-      header={<DialogHeader title="Session exported" onClose={close} />}
+      header={<DialogHeader title="会话已导出" onClose={close} />}
       footer={{
         actions: {
           primary: [
             copied()
-              ? { title: "✓ copied", color: theme.text.feedback.success.base, onTrigger: copy }
-              : { title: "copy path", key: "c", onTrigger: copy },
+              ? { title: "✓ 已复制", color: theme.text.feedback.success.base, onTrigger: copy }
+              : { title: "复制路径", key: "c", onTrigger: copy },
           ],
         },
       }}
@@ -64,7 +64,7 @@ export function DialogExportResult(props: { path: string; onClose?: () => void }
             backgroundColor={theme.background.action.primary.focused}
             onMouseUp={close}
           >
-            <text fg={theme.text.action.primary.focused}>Close</text>
+            <text fg={theme.text.action.primary.focused}>关闭</text>
           </box>
         </box>
       }

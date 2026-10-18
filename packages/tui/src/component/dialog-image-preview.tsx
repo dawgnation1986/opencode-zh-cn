@@ -30,29 +30,29 @@ export function DialogImagePreview(props: { images: readonly ImagePreviewItem[];
   Keymap.createLayer(() => ({
     mode: "modal",
     commands: [
-      { bind: "left", title: "Previous image", group: "Dialog", run: () => move(-1) },
-      { bind: "right", title: "Next image", group: "Dialog", run: () => move(1) },
+      { bind: "left", title: "上一张图片", group: "Dialog", run: () => move(-1) },
+      { bind: "right", title: "下一张图片", group: "Dialog", run: () => move(1) },
     ],
   }))
 
   return (
     <DialogLayout
       id="prompt-image-viewer"
-      header={<DialogHeader title={`Image ${index() + 1} of ${props.images.length}`} />}
+      header={<DialogHeader title={`图片 ${index() + 1} / ${props.images.length}`} />}
       footer={{
         actions: {
           primary:
             props.images.length > 1
               ? [
-                  { title: "previous", key: "←", onTrigger: () => move(-1) },
-                  { title: "next", key: "→", onTrigger: () => move(1) },
+                  { title: "上一张", key: "←", onTrigger: () => move(-1) },
+                  { title: "下一张", key: "→", onTrigger: () => move(1) },
                 ]
               : [],
         },
         get children() {
           return (
             <text fg={failed() ? theme.text.feedback.error.base : theme.text.muted} wrapMode="none" truncate>
-              {failed() ? "No preview" : (current().mention?.text ?? `Image ${index() + 1}`)}
+              {failed() ? "无预览" : (current().mention?.text ?? `图片 ${index() + 1}`)}
             </text>
           )
         },
@@ -60,13 +60,13 @@ export function DialogImagePreview(props: { images: readonly ImagePreviewItem[];
       legacyFooter={
         <box flexDirection="row" justifyContent="space-between">
           <text fg={theme.text.muted} onMouseUp={() => move(-1)}>
-            {props.images.length > 1 ? "← previous" : ""}
+            {props.images.length > 1 ? "← 上一张" : ""}
           </text>
           <text fg={failed() ? theme.text.feedback.error.base : theme.text.muted} wrapMode="none" truncate>
-            {failed() ? "No preview" : (current().mention?.text ?? `Image ${index() + 1}`)}
+            {failed() ? "无预览" : (current().mention?.text ?? `图片 ${index() + 1}`)}
           </text>
           <text fg={theme.text.muted} onMouseUp={() => move(1)}>
-            {props.images.length > 1 ? "next →" : ""}
+            {props.images.length > 1 ? "下一张 →" : ""}
           </text>
         </box>
       }

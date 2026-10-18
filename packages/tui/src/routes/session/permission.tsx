@@ -79,7 +79,7 @@ function EditBody(props: { file?: string; diff?: string; patch?: string }) {
           when={props.patch}
           fallback={
             <box paddingLeft={1}>
-              <text fg={theme.text.muted}>No diff provided</text>
+              <text fg={theme.text.muted}>未提供 diff</text>
             </box>
           }
         >
@@ -171,7 +171,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
             ) : props.request.action === "external_directory" ? (
               <Show when={current.lines.length > 0}>
                 <box paddingLeft={1} gap={1}>
-                  <text fg={theme.text.muted}>Patterns</text>
+                  <text fg={theme.text.muted}>匹配模式</text>
                   <box>
                     <For each={current.lines}>{(line) => <text fg={theme.text.base}>{line}</text>}</For>
                   </box>
@@ -201,7 +201,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
             <box flexDirection="column" gap={0}>
               <box flexDirection="row" gap={1} flexShrink={0}>
                 <text fg={theme.text.feedback.warning.base}>{"△"}</text>
-                <text fg={theme.text.base}>Permission required</text>
+                <text fg={theme.text.base}>需要权限</text>
               </box>
               <Show when={props.request.action !== "shell" && current.title}>
                 <box flexDirection="row" gap={1} paddingLeft={2} flexShrink={0}>
@@ -216,7 +216,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
 
           const body = (
             <SessionQuestion
-              title="Permission required"
+              title="需要权限"
               semanticLabel={permissionSemanticLabel(props.request.action, current.title)}
               instance={props.request.id}
               header={header()}
@@ -286,7 +286,7 @@ function RejectPrompt(props: {
     commands: [
       {
         id: "app.exit",
-        title: "Cancel permission rejection",
+        title: "取消权限拒绝",
         group: "Permission",
         run(_input, event) {
           if (event?.ctrl && event.name === "c" && input.plainText) {
@@ -296,10 +296,10 @@ function RejectPrompt(props: {
           props.onCancel()
         },
       },
-      { bind: "escape", title: "Cancel permission rejection", group: "Permission", run: () => props.onCancel() },
+      { bind: "escape", title: "取消权限拒绝", group: "Permission", run: () => props.onCancel() },
       {
         bind: "return",
-        title: "Confirm permission rejection",
+        title: "确认拒绝权限",
         group: "Permission",
         run: () => props.onConfirm(input.plainText),
       },
@@ -322,10 +322,10 @@ function RejectPrompt(props: {
       <box gap={1} paddingLeft={1} paddingRight={3} paddingTop={1} paddingBottom={1}>
         <box flexDirection="row" gap={1} paddingLeft={1}>
           <text fg={theme.text.feedback.error.base}>{"△"}</text>
-          <text fg={theme.text.base}>Reject permission</text>
+          <text fg={theme.text.base}>拒绝权限</text>
         </box>
         <box paddingLeft={1}>
-          <text fg={theme.text.muted}>Tell OpenCode what to do differently</text>
+          <text fg={theme.text.muted}>告诉 OpenCode 应如何调整</text>
         </box>
       </box>
       <box
@@ -381,7 +381,7 @@ function RejectPrompt(props: {
             onMouseUp={() => props.onConfirm(input.plainText)}
           >
             <text fg={theme.text.base}>
-              enter <span style={{ fg: theme.text.muted }}>confirm</span>
+              回车 <span style={{ fg: theme.text.muted }}>确定</span>
             </text>
           </box>
           <box
@@ -395,7 +395,7 @@ function RejectPrompt(props: {
             onMouseUp={props.onCancel}
           >
             <text fg={theme.text.base}>
-              esc <span style={{ fg: theme.text.muted }}>cancel</span>
+              esc <span style={{ fg: theme.text.muted }}>取消</span>
             </text>
           </box>
         </box>
@@ -444,7 +444,7 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
         ? [
             {
               id: "app.exit",
-              title: "Reject permission",
+              title: "拒绝权限",
               group: group(),
               bind: false as const,
               run: dismiss,
@@ -455,7 +455,7 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
         ? [
             {
               id: "permission.prompt.fullscreen",
-              title: "Toggle permission fullscreen",
+              title: "切换权限全屏",
               group: group(),
               bind: false as const,
               run: () => setStore("expanded", (value) => !value),
@@ -466,7 +466,7 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
         ? [
             {
               bind: "left,h",
-              title: "Previous option",
+              title: "上一选项",
               group: group(),
               run: () => {
                 const index = keys.indexOf(store.selected)
@@ -475,7 +475,7 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
             },
             {
               bind: "right,l",
-              title: "Next option",
+              title: "下一选项",
               group: group(),
               run: () => {
                 const index = keys.indexOf(store.selected)
@@ -486,16 +486,16 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
         : []),
       {
         bind: "return",
-        title: "Select option",
+        title: "选择选项",
         group: group(),
         run: () => props.onSelect(store.selected),
       },
-      ...(props.escapeKey ? [{ bind: "escape", title: "Reject permission", group: group(), run: dismiss }] : []),
+      ...(props.escapeKey ? [{ bind: "escape", title: "拒绝权限", group: group(), run: dismiss }] : []),
     ],
     bindings: [...(props.escapeKey ? ["app.exit"] : []), ...(props.fullscreen ? ["permission.prompt.fullscreen"] : [])],
   }))
 
-  const hint = createMemo(() => (store.expanded ? "minimize" : "fullscreen"))
+  const hint = createMemo(() => (store.expanded ? "还原" : "全屏"))
   useRenderer()
 
   const content = () => (
@@ -603,11 +603,11 @@ export function SessionQuestion<const T extends Record<string, string>>(props: {
           </Show>
           <Show when={keys.length > 1}>
             <text fg={theme.text.base}>
-              {"⇆"} <span style={{ fg: theme.text.muted }}>select</span>
+              {"⇆"} <span style={{ fg: theme.text.muted }}>选择</span>
             </text>
           </Show>
           <text fg={theme.text.base}>
-            enter <span style={{ fg: theme.text.muted }}>confirm</span>
+            enter <span style={{ fg: theme.text.muted }}>确定</span>
           </text>
         </box>
       </box>

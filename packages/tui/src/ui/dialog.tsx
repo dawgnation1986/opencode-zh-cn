@@ -116,7 +116,7 @@ export function DialogHeader(
         flexShrink={0}
         onMouseUp={() => (props.onClose ?? dialog.clear)()}
       >
-        {props.closeLabel ?? "esc"}
+        {props.closeLabel ?? "ESC 关闭"}
       </text>
     </box>
   )
@@ -346,7 +346,7 @@ function init() {
     commands: [
       {
         bind: "escape",
-        title: "Close dialog",
+        title: "关闭弹窗",
         group: "Dialog",
         run: () => {
           if (renderer.getSelection()) {
@@ -361,7 +361,7 @@ function init() {
       },
       {
         bind: "ctrl+c",
-        title: "Close dialog",
+        title: "关闭弹窗",
         group: "Dialog",
         run: () => {
           if (renderer.getSelection()) {

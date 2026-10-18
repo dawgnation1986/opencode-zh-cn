@@ -74,10 +74,10 @@ export function Composer(props: ComposerProps) {
     enabled: () => props.open,
     priority: 1,
     commands: [
-      { bind: "left", title: "Previous tab", group: "Composer", run: () => switchTab(-1) },
-      { bind: "right", title: "Next tab", group: "Composer", run: () => switchTab(1) },
-      { bind: "escape", title: "Close composer", group: "Composer", run: close },
-      { bind: "ctrl+c", title: "Close composer", group: "Composer", run: close },
+      { bind: "left", title: "上一个标签页", group: "Composer", run: () => switchTab(-1) },
+      { bind: "right", title: "下一个标签页", group: "Composer", run: () => switchTab(1) },
+      { bind: "escape", title: "关闭编辑器", group: "Composer", run: close },
+      { bind: "ctrl+c", title: "关闭编辑器", group: "Composer", run: close },
     ],
   }))
 
@@ -143,7 +143,7 @@ export function Composer(props: ComposerProps) {
               <Show when={tabList().length > 1}>
                 <text>
                   <span style={{ fg: theme.text.base }}>
-                    <b>tabs</b>{" "}
+                    <b>标签页</b>{" "}
                   </span>
                   <span style={{ fg: theme.text.muted }}>←/→</span>
                 </text>

@@ -22,7 +22,7 @@ export function DialogAlert(props: DialogAlertProps) {
     commands: [
       {
         bind: "return",
-        title: "Confirm alert",
+        title: "确认",
         group: "Dialog",
         run: confirm,
       },
@@ -31,7 +31,7 @@ export function DialogAlert(props: DialogAlertProps) {
   return (
     <DialogLayout
       header={<DialogHeader title={props.title} />}
-      footer={{ actions: { primary: [{ title: "ok", key: "enter", onTrigger: confirm }] } }}
+      footer={{ actions: { primary: [{ title: "确定", key: "enter", onTrigger: confirm }] } }}
       legacyFooter={
         <box flexDirection="row" justifyContent="flex-end">
           <box
@@ -40,7 +40,7 @@ export function DialogAlert(props: DialogAlertProps) {
             backgroundColor={theme.background.action.primary.focused}
             onMouseUp={confirm}
           >
-            <text fg={theme.text.action.primary.focused}>ok</text>
+            <text fg={theme.text.action.primary.focused}>确定</text>
           </box>
         </box>
       }

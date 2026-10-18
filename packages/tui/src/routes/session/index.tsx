@@ -250,7 +250,7 @@ export function Session(props: {
   Keymap.createLayer(() => ({
     priority: 10,
     enabled: () => props.sidebarVisible && dimensions().width - props.verticalTabsWidth <= 120 && !disabled(),
-    commands: [{ bind: "escape,ctrl+c", title: "Close sidebar", group: "Session", run: props.onToggleSidebar }],
+    commands: [{ bind: "escape,ctrl+c", title: "关闭侧边栏", group: "Session", run: props.onToggleSidebar }],
   }))
   const contentWidth = createMemo(() => (props.width ?? dimensions().width - props.verticalTabsWidth) - 4)
   const models = createMemo(() => data.location.model.list(location()) ?? [])
@@ -340,7 +340,7 @@ export function Session(props: {
       const info = data.session.get(sessionID)
       if (!info) {
         toast.show({
-          message: `Session not found: ${sessionID}`,
+          message: `未找到会话：${sessionID}`,
           variant: "error",
           duration: 5000,
         })
@@ -637,8 +637,8 @@ export function Session(props: {
         (error) => error,
       )
       if (!error) return true
-      const label = failureLabel ?? (action === "cancel" ? "delete" : action)
-      toast.show({ title: `Failed to ${label} pending prompt`, message: errorMessage(error), variant: "error" })
+      const label = failureLabel ?? (action === "cancel" ? "删除" : action === "steer" ? "引导" : "排队")
+      toast.show({ title: `无法${label}待处理的提示词`, message: errorMessage(error), variant: "error" })
       return false
     })
     return result ?? false
@@ -646,13 +646,13 @@ export function Session(props: {
   const openQueuedPrompts = () =>
     dialog.replace(() => (
       <DialogSelect
-        title="Queued prompts"
+        title="排队的提示词"
         searchInTitle
-        titlePlaceholder="Search queued prompts"
+        titlePlaceholder="搜索排队的提示词"
         options={queuedPrompts().map((prompt, index) => ({
           title: prompt.text,
           value: prompt.id,
-          footer: `${index + 1} of ${queuedPrompts().length}`,
+          footer: `${index + 1} / ${queuedPrompts().length}`,
         }))}
         onSelect={(option) => {
           void mutatePending("steer", option.value).then((steered) => {
@@ -662,7 +662,7 @@ export function Session(props: {
         actions={[
           {
             command: "queued_prompt.delete",
-            title: "delete",
+            title: "删除",
             onTrigger: (option) => {
               const last = queuedPrompts().length === 1
               void mutatePending("cancel", option.value).then((cancelled) => {
@@ -672,16 +672,16 @@ export function Session(props: {
           },
           {
             command: "queued_prompt.undo",
-            title: "undo",
+            title: "撤销",
             onTrigger: (option) => {
               const target = prompt()
               const queued = queuedPrompts().find((item) => item.id === option.value)
               if (!target || !queued) return
               if (target.mode === "shell" && target.current.text) {
-                toast.show({ message: "Leave shell mode before undoing a queued prompt", variant: "error" })
+                toast.show({ message: "撤销排队的提示词前请先退出 shell 模式", variant: "error" })
                 return
               }
-              void mutatePending("cancel", queued.id, "undo").then((undone) => {
+              void mutatePending("cancel", queued.id, "撤销").then((undone) => {
                 if (!undone) return
                 target.setMode("normal")
                 target.set(appendPrompt(target.current, { ...projectedPromptInput(queued.payload), pasted: [] }))
@@ -691,7 +691,7 @@ export function Session(props: {
             },
           },
         ]}
-        footerHints={[{ title: "steer", label: "enter", group: "primary" }]}
+        footerHints={[{ title: "引导", label: "enter", group: "primary" }]}
       />
     ))
   const alignMessage = (messageID: string, top: number) => {
@@ -779,42 +779,42 @@ export function Session(props: {
   const globalCommands = [
     {
       id: "session.page.up",
-      title: "Page up",
+      title: "上翻页",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(-scroll.height / 2),
     },
     {
       id: "session.page.down",
-      title: "Page down",
+      title: "下翻页",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(scroll.height / 2),
     },
     {
       id: "session.line.up",
-      title: "Line up",
+      title: "上移一行",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(-1),
     },
     {
       id: "session.line.down",
-      title: "Line down",
+      title: "下移一行",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(1),
     },
     {
       id: "session.half.page.up",
-      title: "Half page up",
+      title: "上半页",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(-scroll.height / 4),
     },
     {
       id: "session.half.page.down",
-      title: "Half page down",
+      title: "下半页",
       group: "Session",
       palette: undefined,
       run: () => moveTranscript(scroll.height / 4),
@@ -824,7 +824,7 @@ export function Session(props: {
   const baseAndUnfocusedCommands = [
     {
       id: "session.first",
-      title: "First message",
+      title: "第一条消息",
       group: "Session",
       palette: undefined,
       run: () => {
@@ -892,7 +892,7 @@ export function Session(props: {
     },
     {
       id: "session.last",
-      title: "Last message",
+      title: "最后一条消息",
       group: "Session",
       palette: undefined,
       run: () => {
@@ -904,7 +904,7 @@ export function Session(props: {
 
   const baseCommands = createMemo(() => [
     {
-      title: "Rename session",
+      title: "重命名会话",
       id: "session.rename",
       group: "Session",
       slash: { name: "rename", arguments: true as const },
@@ -919,7 +919,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Jump to message",
+      title: "跳转到消息",
       id: "session.timeline",
       group: "Session",
       slash: { name: "timeline" },
@@ -934,7 +934,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Fork session",
+      title: "派生会话",
       id: "session.fork",
       group: "Session",
       slash: { name: "fork" },
@@ -951,7 +951,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Compact session",
+      title: "压缩会话",
       id: "session.compact",
       group: "Session",
       slash: {
@@ -975,7 +975,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Undo previous message",
+      title: "撤销上一条消息",
       id: "session.undo",
       group: "Session",
       slash: { name: "undo" },
@@ -984,7 +984,7 @@ export function Session(props: {
           (message): message is SessionMessageUser => message.type === "user" && !!message.text.trim(),
         )
         if (!message) {
-          toast.show({ message: "Nothing to undo", variant: "error", duration: 3000 })
+          toast.show({ message: "没有可撤销的内容", variant: "error", duration: 3000 })
           dialog.clear()
           return
         }
@@ -1007,7 +1007,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Redo",
+      title: "重做",
       id: "session.redo",
       group: "Session",
       enabled: !!session()?.revert?.messageID,
@@ -1026,8 +1026,8 @@ export function Session(props: {
     {
       title: (() => {
         const next = nextThinkingMode(thinkingMode())
-        if (next === "hide") return "Collapse thinking"
-        return "Expand thinking"
+        if (next === "hide") return "折叠思考"
+        return "展开思考"
       })(),
       id: "session.toggle.thinking",
       group: "Session",
@@ -1042,7 +1042,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Toggle session scrollbar",
+      title: "切换会话滚动条",
       id: "session.toggle.scrollbar",
       group: "Session",
       palette: undefined,
@@ -1056,7 +1056,7 @@ export function Session(props: {
       },
     },
     {
-      title: groupExploration() ? "Show tool calls individually" : "Group related tool calls",
+      title: groupExploration() ? "单独显示工具调用" : "分组相关工具调用",
       id: "session.toggle.exploration_grouping",
       group: "Session",
       palette: undefined,
@@ -1070,7 +1070,7 @@ export function Session(props: {
       },
     },
     {
-      title: `Verbosity: ${Locale.titlecase(verbosity())}`,
+      title: `详细程度：${Locale.titlecase(verbosity())}`,
       id: "session.verbosity.cycle",
       group: "Session",
       run: () => {
@@ -1085,7 +1085,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Jump to last user message",
+      title: "跳转到最后一条用户消息",
       id: "session.messages_last_user",
       group: "Session",
       palette: undefined,
@@ -1105,35 +1105,35 @@ export function Session(props: {
       },
     },
     {
-      title: "Next message",
+      title: "下一条消息",
       id: "session.message.next",
       group: "Session",
       palette: undefined,
       run: () => scrollToMessage("next", dialog),
     },
     {
-      title: "Previous message",
+      title: "上一条消息",
       id: "session.message.previous",
       group: "Session",
       palette: undefined,
       run: () => scrollToMessage("prev", dialog),
     },
     {
-      title: "Next user message",
+      title: "下一条用户消息",
       id: "session.message.user.next",
       group: "Session",
       palette: undefined,
       run: () => scrollToMessage("next", dialog, true),
     },
     {
-      title: "Previous user message",
+      title: "上一条用户消息",
       id: "session.message.user.previous",
       group: "Session",
       palette: undefined,
       run: () => scrollToMessage("prev", dialog, true),
     },
     {
-      title: "Copy last assistant message",
+      title: "复制最后一条助手消息",
       id: "messages.copy",
       group: "Session",
       slash: {
@@ -1144,7 +1144,7 @@ export function Session(props: {
           (msg) => msg.type === "assistant" || (msg.type === "compaction" && msg.status === "completed" && msg.summary.trim() !== ""),
         )
         if (!lastAssistantMessage) {
-          toast.show({ message: "No assistant messages found", variant: "error" })
+          toast.show({ message: "未找到助手消息", variant: "error" })
           dialog.clear()
           return
         }
@@ -1161,7 +1161,7 @@ export function Session(props: {
               : ""
         if (!text) {
           toast.show({
-            message: "No text content found in last assistant message",
+            message: "最后一条助手消息中没有文本内容",
             variant: "error",
           })
           dialog.clear()
@@ -1170,25 +1170,25 @@ export function Session(props: {
 
         clipboard
           .write(text)
-          .then(() => toast.show({ message: "Message copied to clipboard!", variant: "success" }))
-          .catch(() => toast.show({ message: "Failed to copy to clipboard", variant: "error" }))
+          .then(() => toast.show({ message: "消息已复制到剪贴板！", variant: "success" }))
+          .catch(() => toast.show({ message: "复制到剪贴板失败", variant: "error" }))
         dialog.clear()
       },
     },
     {
-      title: "Copy session ID",
+      title: "复制会话 ID",
       id: "session.copy.id",
       group: "Session",
       run: () => {
         clipboard
           .write(route.sessionID)
-          .then(() => toast.show({ message: "Session ID copied to clipboard!", variant: "success" }))
-          .catch(() => toast.show({ message: "Failed to copy session ID", variant: "error" }))
+          .then(() => toast.show({ message: "会话 ID 已复制到剪贴板！", variant: "success" }))
+          .catch(() => toast.show({ message: "复制会话 ID 失败", variant: "error" }))
         dialog.clear()
       },
     },
     {
-      title: "Copy session transcript",
+      title: "复制会话记录",
       id: "session.copy",
       group: "Session",
       run: async () => {
@@ -1198,15 +1198,15 @@ export function Session(props: {
           const transcript = await client.api.session.export({ sessionID: sessionData.id })
           const content = formatSessionTranscript(transcript.info, transcript.messages, true)
           await clipboard.write(content)
-          toast.show({ message: "Session transcript copied to clipboard!", variant: "success" })
+          toast.show({ message: "会话记录已复制到剪贴板！", variant: "success" })
         } catch {
-          toast.show({ message: "Failed to copy session transcript", variant: "error" })
+          toast.show({ message: "复制会话记录失败", variant: "error" })
         }
         dialog.clear()
       },
     },
     {
-      title: "Export session transcript",
+      title: "导出会话记录",
       id: "session.export",
       group: "Session",
       slash: {
@@ -1233,7 +1233,7 @@ export function Session(props: {
           if (options.action === "copy") {
             await clipboard.write(content)
             dialog.clear()
-            toast.show({ message: "Copied to clipboard", variant: "success" })
+            toast.show({ message: "已复制到剪贴板", variant: "success" })
             return
           }
 
@@ -1244,13 +1244,13 @@ export function Session(props: {
           await writeExport(filepath, content)
           await DialogExportResult.show(dialog, filepath)
         } catch {
-          toast.show({ message: "Failed to export session", variant: "error" })
+          toast.show({ message: "导出会话失败", variant: "error" })
         }
         dialog.clear()
       },
     },
     {
-      title: "Background blocking tools",
+      title: "将阻塞工具转为后台",
       id: "session.background",
       group: "Session",
       palette: undefined,
@@ -1260,7 +1260,7 @@ export function Session(props: {
       },
     },
     {
-      title: "Toggle subagent picker",
+      title: "切换子代理选择器",
       id: "session.child.first",
       group: "Session",
       run: () => {
@@ -1270,14 +1270,14 @@ export function Session(props: {
       },
     },
     {
-      title: "View queued prompts",
+      title: "查看排队的提示词",
       id: "session.queued_prompts",
       group: "Prompt",
       enabled: queuedPrompts().length > 0,
       run: openQueuedPrompts,
     },
     {
-      title: "Go to parent session",
+      title: "转到父会话",
       id: "session.parent",
       group: "Session",
       palette: undefined,
@@ -1441,7 +1441,7 @@ export function Session(props: {
             </box>
             <box height={1} flexShrink={0} flexDirection="row" justifyContent="flex-end">
               <Show when={firstJump()}>
-                <text fg={theme.text.feedback.info.base}>Loading session history…</text>
+                <text fg={theme.text.feedback.info.base}>正在加载会话历史…</text>
               </Show>
               <Show when={!firstJump() && awayFromBottom()}>
                 <box
@@ -1454,7 +1454,7 @@ export function Session(props: {
                   <text
                     fg={latestHovered() ? theme.text.action.secondary.hovered : theme.text.action.secondary.base}
                   >
-                    Jump to latest ↓
+                    跳到最新 ↓
                   </text>
                 </box>
               </Show>
@@ -1645,10 +1645,10 @@ function TurnTokenUsage(props: {
     })
   })
   const columns = createMemo(() => ({
-    step: Math.max("Step".length, ...steps().map((item) => item.finish.length)),
-    newTokens: Math.max("New".length, ...steps().map((item) => item.newTokens.toLocaleString().length)),
-    cached: Math.max("Cached".length, ...steps().map((item) => item.cached.toLocaleString().length)),
-    total: Math.max("Total".length, ...steps().map((item) => item.total.toLocaleString().length)),
+    step: Math.max("步骤".length, ...steps().map((item) => item.finish.length)),
+    newTokens: Math.max("新增".length, ...steps().map((item) => item.newTokens.toLocaleString().length)),
+    cached: Math.max("缓存".length, ...steps().map((item) => item.cached.toLocaleString().length)),
+    total: Math.max("总计".length, ...steps().map((item) => item.total.toLocaleString().length)),
   }))
   const summary = createMemo(() => {
     const items = steps()
@@ -1677,14 +1677,14 @@ function TurnTokenUsage(props: {
             <span>{expanded() ? "- " : "+ "}</span>
             <span style={{ attributes: TextAttributes.BOLD }}>Tokens</span>
             <span>
-              : {summary().count} {summary().count === 1 ? "step" : "steps"} · latest:{" "}
-              {summary().latestNewTokens.toLocaleString()} new · {summary().latestCached.toLocaleString()} cached ·{" "}
-              {summary().latestTotal.toLocaleString()} total
+              : {summary().count} {summary().count === 1 ? "步" : "步"} · 最新：{" "}
+              {summary().latestNewTokens.toLocaleString()} 新增 · {summary().latestCached.toLocaleString()} 缓存 ·{" "}
+              {summary().latestTotal.toLocaleString()} 总计
             </span>
             <Show when={summary().reuseDrops > 0}>
               <span style={{ fg: theme.text.feedback.warning.base }}>
                 {" "}
-                · ! {summary().reuseDrops} likely cache {summary().reuseDrops === 1 ? "bust" : "busts"}
+                · ! {summary().reuseDrops} 次可能的缓存失效
               </span>
             </Show>
           </text>
@@ -1692,12 +1692,12 @@ function TurnTokenUsage(props: {
         <Show when={expanded()}>
           <box paddingLeft={INLINE_TOOL_ICON_WIDTH}>
             <text fg={theme.text.muted} attributes={TextAttributes.ITALIC}>
-              {"Step".padEnd(columns().step + 2)}
-              {"New".padStart(columns().newTokens)}
+              {"步骤".padEnd(columns().step + 2)}
+              {"新增".padStart(columns().newTokens)}
               {"  "}
-              {"Cached".padStart(columns().cached)}
+              {"缓存".padStart(columns().cached)}
               {"  "}
-              {"Total".padStart(columns().total)}
+              {"总计".padStart(columns().total)}
             </text>
           </box>
           <For each={steps()}>
@@ -1716,7 +1716,7 @@ function TurnTokenUsage(props: {
                 <TurnTokenToolCalls tools={item.tools} />
                 <Show when={item.reuseDrop !== undefined}>
                   <text fg={theme.text.feedback.warning.base}>
-                    ! Likely cache bust: {item.reuseDrop?.toLocaleString()} fewer cached tokens than the previous step
+                    ! 可能的缓存失效：缓存 token 比上一步少 {item.reuseDrop?.toLocaleString()}
                   </text>
                 </Show>
               </box>
@@ -1789,7 +1789,7 @@ function BackgroundToolHint(props: { messages: SessionMessageInfo[] }) {
       {(value) => (
         <box marginTop={1} paddingLeft={3} flexShrink={0}>
           <text fg={theme.text.muted}>
-            Press <span style={{ fg: theme.text.base }}>{value()}</span> to move running work to the background
+            按 <span style={{ fg: theme.text.base }}>{value()}</span> 将运行中的工作转到后台
           </text>
         </box>
       )}
@@ -1836,7 +1836,7 @@ function ExecutionError(props: { error: NonNullable<Extract<SessionMessageInfo, 
   const theme = useTheme()
   return (
     <box paddingLeft={3}>
-      <text fg={theme.text.feedback.error.base}>Error: {errorMessage(props.error)}</text>
+      <text fg={theme.text.feedback.error.base}>错误: {errorMessage(props.error)}</text>
     </box>
   )
 }
@@ -1904,7 +1904,7 @@ function AssistantFooter(props: { message: SessionMessageAssistant }) {
     <>
       <Show when={props.message.error && !interrupted() && !props.message.retry}>
         <box paddingLeft={3}>
-          <text fg={theme.text.feedback.error.base}>Error: {errorMessage(props.message.error)}</text>
+          <text fg={theme.text.feedback.error.base}>错误: {errorMessage(props.message.error)}</text>
         </box>
       </Show>
       <AssistantRetry retry={props.message.retry} />
@@ -1923,7 +1923,7 @@ function AssistantFooter(props: { message: SessionMessageAssistant }) {
             {(value) => <span style={{ fg: theme.text.muted }}> · {value().toFixed(1)} tok/s</span>}
           </Show>
           <Show when={interrupted()}>
-            <span style={{ fg: theme.text.muted }}> · interrupted</span>
+            <span style={{ fg: theme.text.muted }}> · 已中断</span>
           </Show>
         </text>
       </box>
@@ -1938,7 +1938,7 @@ function SessionSwitchMessageV2(props: { message: SessionMessageInfo }) {
     return (
       <box paddingLeft={3}>
         <text>
-          <span style={{ fg: theme.text.muted }}>↳ Moved to </span>
+          <span style={{ fg: theme.text.muted }}>↳ 已移动到 </span>
           <span style={{ fg: theme.text.feedback.info.base }}>{props.message.location.directory}</span>
         </text>
       </box>
@@ -1947,8 +1947,8 @@ function SessionSwitchMessageV2(props: { message: SessionMessageInfo }) {
     if (props.message.type === "agent-switched") {
       const agent = Locale.titlecase(props.message.agent)
       if (props.message.previous && props.message.previous !== props.message.agent)
-        return `Switched agent from ${Locale.titlecase(props.message.previous)} to ${agent}`
-      return `Switched agent to ${agent}`
+        return `已将代理从 ${Locale.titlecase(props.message.previous)} 切换为 ${agent}`
+      return `已切换代理为 ${agent}`
     }
     if (props.message.type === "model-switched")
       return switchLabel(props.message.model, ctx.models(), props.message.previous)
@@ -1972,17 +1972,17 @@ function SessionNoticeMessageV2(props: { message: SessionMessageInfo }) {
   const completion = () => source() === "subagent" || source() === "shell"
   const childID = () => (source() === "subagent" ? stringValue(metadata()?.childID) : undefined)
   const state = () => stringValue(metadata()?.state)
-  const actor = () => (source() === "shell" ? "Shell" : Locale.titlecase(stringValue(metadata()?.agent) ?? "Subagent"))
+  const actor = () => (source() === "shell" ? "Shell" : Locale.titlecase(stringValue(metadata()?.agent) ?? "子代理"))
   const text = () => {
-    if (props.message.type === "system") return props.message.description ?? "Instructions updated"
+    if (props.message.type === "system") return props.message.description ?? "指令已更新"
     if (props.message.type === "synthetic") return props.message.description ?? ""
     return ""
   }
   const description = () => (source() === "shell" ? text().replace(/\s+/g, " ").trim() : text())
   const status = () => {
-    if (state() === "completed") return "finished"
-    if (state() === "error") return "failed"
-    return state() ?? "finished"
+    if (state() === "completed") return "已完成"
+    if (state() === "error") return "已失败"
+    return state() ?? "已完成"
   }
   const heading = () => `${state() === "completed" ? "↳" : "!"} ${actor()} ${status()}`
   const suffix = () => Locale.truncateWidth(` · ${description()}`, Math.max(0, ctx.width - 3 - stringWidth(heading())))
@@ -1996,7 +1996,7 @@ function SessionNoticeMessageV2(props: { message: SessionMessageInfo }) {
     <Show
       when={completion()}
       fallback={
-        <InlineToolRow icon="◈" color={theme.text.muted} pending="Notice" complete={true}>
+        <InlineToolRow icon="◈" color={theme.text.muted} pending="通知" complete={true}>
           {text()}
         </InlineToolRow>
       }
@@ -2023,8 +2023,8 @@ function SessionNoticeMessageV2(props: { message: SessionMessageInfo }) {
 function SessionSkillMessage(props: { message: Extract<SessionMessageInfo, { type: "skill" }> }) {
   const theme = useTheme()
   return (
-    <InlineToolRow icon="→" color={theme.text.muted} pending="Skill" complete={true}>
-      Skill {props.message.name}
+    <InlineToolRow icon="→" color={theme.text.muted} pending="技能" complete={true}>
+      技能 {props.message.name}
     </InlineToolRow>
   )
 }
@@ -2047,7 +2047,7 @@ function CompactionMessage(props: { message: Extract<SessionMessageInfo, { type:
     const input = tokens.input + tokens.cache.read + tokens.cache.write
     const output = tokens.output + tokens.reasoning
     if (input + output <= 0) return
-    return `${Locale.number(input)} in · ${Locale.number(output)} out`
+    return `${Locale.number(input)} 输入 · ${Locale.number(output)} 输出`
   }
   return (
     <box>
@@ -2066,11 +2066,11 @@ function CompactionMessage(props: { message: Extract<SessionMessageInfo, { type:
           </Switch>
           <text fg={color()}>
             {props.message.status === "completed" && props.message.providerContext
-              ? "Provider compaction"
-              : "Compaction"}
+              ? "服务商压缩"
+              : "压缩"}
           </text>
           <Show when={cancelled()}>
-            <text fg={color()}>· cancelled</text>
+            <text fg={color()}>· 已取消</text>
           </Show>
           <Show when={usage()}>
             <text fg={color()}>· {usage()}</text>
@@ -2104,7 +2104,7 @@ function CompactionQueued() {
       <box border={["top"]} borderColor={theme.border.base} flexGrow={1} />
       <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
         <text fg={theme.text.muted}>◇</text>
-        <text fg={theme.text.muted}>Compaction queued</text>
+        <text fg={theme.text.muted}>已排队压缩</text>
       </box>
       <box border={["top"]} borderColor={theme.border.base} flexGrow={1} />
     </box>
@@ -2155,7 +2155,7 @@ function RevertMessage(props: {
         backgroundColor={hover() ? theme.decrease(theme.background.raised.base) : theme.background.raised.base}
       >
         <text fg={theme.text.muted}>
-          {props.count} message{props.count === 1 ? "" : "s"} reverted
+          已还原 {props.count} 条消息{props.count === 1 ? "" : ""}
         </text>
         <Show when={props.files.length > 0}>
           <box paddingTop={1} paddingBottom={1} flexDirection="column">
@@ -2186,7 +2186,7 @@ function RevertMessage(props: {
           </box>
         </Show>
         <text fg={theme.text.muted}>
-          <span style={{ fg: theme.text.base }}>{redoKey()}</span> or /redo to restore
+          <span style={{ fg: theme.text.base }}>{redoKey()}</span> 或 /redo 恢复
         </text>
       </box>
     </box>
@@ -2195,10 +2195,10 @@ function RevertMessage(props: {
 
 function ShellMessage(props: { message: Extract<SessionMessageInfo, { type: "shell" }> }) {
   const error = createMemo(() => {
-    if (props.message.status === "killed") return "Command cancelled"
-    if (props.message.status === "timeout") return "Command timed out"
+    if (props.message.status === "killed") return "命令已取消"
+    if (props.message.status === "timeout") return "命令超时"
     if (props.message.exit !== undefined && props.message.exit !== 0)
-      return `Command exited with code ${props.message.exit}`
+      return `命令退出码为 ${props.message.exit}`
   })
 
   return (
@@ -2259,11 +2259,11 @@ function UserMessage(props: { message: SessionMessageUser }) {
             if (delivery() === "steer") {
               dialog.replace(() => (
                 <DialogSelect
-                  title="Pending steer"
+                  title="待处理引导"
                   renderFilter={!newDesigns()}
                   options={[
-                    { title: "Move to queue", value: "queue" as const },
-                    { title: "Delete", value: "cancel" as const },
+                    { title: "移至队列", value: "queue" as const },
+                    { title: "删除", value: "cancel" as const },
                   ]}
                   onSelect={(option) => {
                     void updatePendingSteer(option.value)
@@ -2315,7 +2315,7 @@ function UserMessage(props: { message: SessionMessageUser }) {
             <box flexDirection="row" paddingTop={1} gap={1} flexWrap="wrap">
               <For each={files()}>
                 {(file) => {
-                  const label = file.mime === "application/x-directory" ? "dir" : "file"
+                  const label = file.mime === "application/x-directory" ? "目录" : "文件"
                   return (
                     <text fg={theme.text.base}>
                       <span
@@ -2329,7 +2329,7 @@ function UserMessage(props: { message: SessionMessageUser }) {
                       </span>
                       <span style={{ bg: theme.decrease(theme.background.raised.base), fg: theme.text.muted }}>
                         {" "}
-                        {file.name ?? (file.source.type === "uri" ? file.source.uri : "attachment")}{" "}
+                        {file.name ?? (file.source.type === "uri" ? file.source.uri : "附件")}{" "}
                       </span>
                     </text>
                   )
@@ -2368,7 +2368,7 @@ function QueuedPromptDock(props: { prompts: { id: string; text: string }[]; onOp
         flexDirection="row"
       >
         <text fg={theme.text.muted} wrapMode="none" truncate flexGrow={1} flexShrink={1} minWidth={0}>
-          <span style={{ fg: theme.text.base }}>{props.prompts.length} queued</span>
+          <span style={{ fg: theme.text.base }}>{props.prompts.length} 个排队中</span>
           <Show when={next()}>{(text) => <> · {text()}</>}</Show>
         </text>
       </box>
@@ -2394,7 +2394,7 @@ function AssistantRetry(props: { retry: SessionMessageAssistant["retry"] }) {
       {(retry) => (
         <box paddingLeft={3}>
           <text fg={theme.text.feedback.warning.base}>
-            ⚠ {seconds() > 0 ? `Retrying in ${seconds()}s` : "Retry due"} · attempt {retry().attempt} ·{" "}
+            ⚠ {seconds() > 0 ? `将在 ${seconds()}s 后重试` : "即将重试"} · 尝试 {retry().attempt} ·{" "}
             {retry().error.message}
           </text>
         </box>
@@ -2523,7 +2523,7 @@ function SessionImages(props: { images: readonly { uri: string }[]; paddingLeft?
                   dialog.replace(() => <DialogImagePreview images={images()} initial={index()} />)
                 }}
               >
-                <Show when={!failed()} fallback={<text>No preview</text>}>
+                <Show when={!failed()} fallback={<text>无预览</text>}>
                   <image
                     source={image.uri}
                     fit="cover"
@@ -2540,7 +2540,7 @@ function SessionImages(props: { images: readonly { uri: string }[]; paddingLeft?
         <Show when={images().length > visible().length}>
           <box width={8} height={height()} flexShrink={1} alignItems="center" justifyContent="center">
             <text wrapMode="none" truncate>
-              +{images().length - visible().length} more
+              +{images().length - visible().length} 张
             </text>
           </box>
         </Show>
@@ -2602,7 +2602,7 @@ function GenericTool(props: ToolProps) {
             {(value) => (
               <box flexDirection="row">
                 <text flexShrink={0} fg={theme.text.muted}>
-                  output:{" "}
+                  输出:{" "}
                 </text>
                 <text flexGrow={1} fg={theme.text.base} wrapMode="word">
                   {value()}
@@ -2918,7 +2918,7 @@ function ShellDisplay(props: {
       if (props.background && !expanded()) return ""
       if (props.status === "completed" && props.output !== undefined) return stripAnsi(props.output.trim())
       const text = stripAnsi((backgroundOutput() || props.output || "").trim())
-      return outputTruncated() ? `[earlier output omitted]\n${text}` : text
+      return outputTruncated() ? `[已省略较早的输出]\n${text}` : text
     }
     return stripAnsi(props.output?.trim() ?? "")
   })
@@ -2943,9 +2943,9 @@ function ShellDisplay(props: {
           when={props.command}
           fallback={
             isRunning() || props.status === "streaming" ? (
-              <Spinner color={color()}>Writing command…</Spinner>
+              <Spinner color={color()}>正在写入命令…</Spinner>
             ) : (
-              <text fg={theme.text.muted}>Writing command…</text>
+              <text fg={theme.text.muted}>正在写入命令…</text>
             )
           }
         >
@@ -2979,7 +2979,7 @@ function ShellDisplay(props: {
           </Show>
         </Show>
         <Show when={props.background}>
-          <StatusBadge raised>Background</StatusBadge>
+          <StatusBadge raised>后台</StatusBadge>
         </Show>
       </box>
     </BlockTool>
@@ -2998,7 +2998,7 @@ function Write(props: ToolProps) {
     <Switch>
       <Match when={props.part.state.status === "completed"}>
         <BlockTool
-          path={{ label: "# Wrote", value: pathFormatter.format(stringValue(props.input.path)) }}
+          path={{ label: "# 已写入", value: pathFormatter.format(stringValue(props.input.path)) }}
           part={props.part}
         >
           <line_number fg={theme.text.muted} minWidth={3} paddingRight={1}>
@@ -3014,8 +3014,8 @@ function Write(props: ToolProps) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="←" pending="Preparing write…" complete={stringValue(props.input.path)} part={props.part}>
-          Write {pathFormatter.format(stringValue(props.input.path))}
+        <InlineTool icon="←" pending="正在准备写入…" complete={stringValue(props.input.path)} part={props.part}>
+          写入 {pathFormatter.format(stringValue(props.input.path))}
         </InlineTool>
       </Match>
     </Switch>
@@ -3025,11 +3025,11 @@ function Write(props: ToolProps) {
 function Glob(props: ToolProps) {
   const pathFormatter = usePathFormatter()
   return (
-    <InlineTool icon="✱" pending="Finding files…" complete={stringValue(props.input.pattern)} part={props.part}>
+    <InlineTool icon="✱" pending="正在查找文件…" complete={stringValue(props.input.pattern)} part={props.part}>
       Glob "{stringValue(props.input.pattern)}"{" "}
-      <Show when={stringValue(props.input.path)}>in {pathFormatter.format(stringValue(props.input.path))} </Show>
+      <Show when={stringValue(props.input.path)}>在 {pathFormatter.format(stringValue(props.input.path))} 中 </Show>
       <Show when={finiteNumber(props.metadata.count)}>
-        ({finiteNumber(props.metadata.count)} {finiteNumber(props.metadata.count) === 1 ? "match" : "matches"})
+        ({finiteNumber(props.metadata.count)} {finiteNumber(props.metadata.count) === 1 ? "处匹配" : "处匹配"})
       </Show>
     </InlineTool>
   )
@@ -3049,12 +3049,12 @@ function Read(props: ToolProps) {
     <>
       <InlineTool
         icon="→"
-        pending="Reading file…"
+        pending="正在读取文件…"
         complete={stringValue(props.input.path)}
         spinner={isRunning()}
         part={props.part}
       >
-        Read {pathFormatter.format(stringValue(props.input.path))}
+        读取 {pathFormatter.format(stringValue(props.input.path))}
         <Show when={props.input.offset !== undefined || props.input.limit !== undefined}>
           :{finiteNumber(props.input.offset) || 1}-
           {props.input.limit ? (finiteNumber(props.input.offset) || 1) + (finiteNumber(props.input.limit) || 0) - 1 : ""}
@@ -3064,7 +3064,7 @@ function Read(props: ToolProps) {
         {(filepath) => (
           <box paddingLeft={3}>
             <text paddingLeft={3} fg={theme.text.muted}>
-              ↳ Loaded {pathFormatter.format(filepath)}
+              ↳ 已加载 {pathFormatter.format(filepath)}
             </text>
           </box>
         )}
@@ -3076,11 +3076,11 @@ function Read(props: ToolProps) {
 function Grep(props: ToolProps) {
   const pathFormatter = usePathFormatter()
   return (
-    <InlineTool icon="✱" pending="Searching content…" complete={stringValue(props.input.pattern)} part={props.part}>
+    <InlineTool icon="✱" pending="正在搜索内容…" complete={stringValue(props.input.pattern)} part={props.part}>
       Grep "{stringValue(props.input.pattern)}"{" "}
-      <Show when={stringValue(props.input.path)}>in {pathFormatter.format(stringValue(props.input.path))} </Show>
+      <Show when={stringValue(props.input.path)}>在 {pathFormatter.format(stringValue(props.input.path))} 中 </Show>
       <Show when={finiteNumber(props.metadata.matches)}>
-        ({finiteNumber(props.metadata.matches)} {finiteNumber(props.metadata.matches) === 1 ? "match" : "matches"})
+        ({finiteNumber(props.metadata.matches)} {finiteNumber(props.metadata.matches) === 1 ? "处匹配" : "处匹配"})
       </Show>
     </InlineTool>
   )
@@ -3088,7 +3088,7 @@ function Grep(props: ToolProps) {
 
 function WebFetch(props: ToolProps) {
   return (
-    <InlineTool icon="%" pending="Fetching from the web…" complete={stringValue(props.input.url)} part={props.part}>
+    <InlineTool icon="%" pending="正在从网页获取…" complete={stringValue(props.input.url)} part={props.part}>
       WebFetch {stringValue(props.input.url)}
     </InlineTool>
   )
@@ -3098,11 +3098,11 @@ function WebSearch(props: ToolProps) {
   const ctx = use()
   const provider = createMemo(() => stringValue(props.metadata.provider))
   return (
-    <InlineTool icon="◈" pending="Searching web…" complete={stringValue(props.input.query)} part={props.part}>
-      <Show when={provider()} fallback="Web Search">
+    <InlineTool icon="◈" pending="正在搜索网络…" complete={stringValue(props.input.query)} part={props.part}>
+      <Show when={provider()} fallback="网络搜索">
         {(value) => (
           <>
-            Web Search via{" "}
+            网络搜索 经由{" "}
             <RetryProvider
               value={{
                 id: `${ctx.sessionID}:${props.part.time.created}:${props.part.id}`,
@@ -3137,7 +3137,7 @@ function Subagent(props: ToolProps) {
       spinner={!continuation() && isRunning()}
       running={isRunning()}
       complete={description()}
-      pending="Delegating…"
+      pending="正在委派…"
       part={props.part}
       onClick={() => {
         const id = sessionID()
@@ -3145,11 +3145,11 @@ function Subagent(props: ToolProps) {
       }}
       status={
         isBackgroundSubagent(props.metadata, props.part.state.status) ? (
-          <StatusBadge>Background</StatusBadge>
+          <StatusBadge>后台</StatusBadge>
         ) : undefined
       }
     >
-      {`${continuation() ? "Continue subagent" : `${Locale.titlecase(stringValue(props.input.agent) ?? stringValue(props.input.subagent_type) ?? "General")} Subagent`} — ${description() ?? "Subagent"}${model() ? ` · ${model()}` : ""}`}
+      {`${continuation() ? "继续子代理" : `${Locale.titlecase(stringValue(props.input.agent) ?? stringValue(props.input.subagent_type) ?? "通用")} 子代理`} — ${description() ?? "子代理"}${model() ? ` · ${model()}` : ""}`}
     </InlineTool>
   )
 }
@@ -3297,7 +3297,7 @@ function Edit(props: ToolProps) {
     <Switch>
       <Match when={file()}>
         {(item) => (
-          <BlockTool path={{ label: "← Edit", value: pathFormatter.format(path()) }} part={props.part}>
+          <BlockTool path={{ label: "← 已编辑", value: pathFormatter.format(path()) }} part={props.part}>
             <box paddingLeft={1}>
               <PatchDiff
                 diff={item().patch}
@@ -3328,10 +3328,10 @@ function Edit(props: ToolProps) {
         <BlockTool
           path={
             stringValue(props.input.path)
-              ? { label: "← Edit", value: pathFormatter.format(stringValue(props.input.path)) }
+              ? { label: "← 已编辑", value: pathFormatter.format(stringValue(props.input.path)) }
               : undefined
           }
-          title={stringValue(props.input.path) ? undefined : "# Preparing edit…"}
+          title={stringValue(props.input.path) ? undefined : "# 正在准备编辑…"}
           part={props.part}
           spinner={props.part.state.status === "streaming"}
         />
@@ -3375,7 +3375,7 @@ function ApplyPatch(props: ToolProps) {
             {(file) => (
               <BlockTool
                 path={{
-                  label: file.type === "add" ? "# Created" : file.type === "delete" ? "# Deleted" : "← Patched",
+                  label: file.type === "add" ? "# 已创建" : file.type === "delete" ? "# 已删除" : "← 已修补",
                   value: pathFormatter.format(file.relativePath),
                 }}
                 part={props.part}
@@ -3384,7 +3384,7 @@ function ApplyPatch(props: ToolProps) {
                   when={file.type !== "delete"}
                   fallback={
                     <text fg={theme.diff.text.removed}>
-                      -{file.deletions} line{file.deletions !== 1 ? "s" : ""}
+                      -{file.deletions} 行{file.deletions !== 1 ? "" : ""}
                     </text>
                   }
                 >
@@ -3422,7 +3422,7 @@ function ApplyPatch(props: ToolProps) {
             {(file) => (
               <BlockTool
                 path={{
-                  label: file.type === "add" ? "# Created" : file.type === "delete" ? "# Deleted" : "← Patched",
+                  label: file.type === "add" ? "# 已创建" : file.type === "delete" ? "# 已删除" : "← 已修补",
                   value: pathFormatter.format(file.resource),
                 }}
                 part={props.part}
@@ -3442,13 +3442,13 @@ function ApplyPatch(props: ToolProps) {
           path={
             targets().length === 1
               ? {
-                  label: props.part.state.status === "error" ? "# Patch failed" : "Patching",
+                  label: props.part.state.status === "error" ? "# 修补失败" : "正在修补",
                   value: pathFormatter.format(targets()[0]),
                 }
               : undefined
           }
           title={
-            targets().length === 1 ? undefined : props.part.state.status === "error" ? "# Patch failed" : "Patching"
+            targets().length === 1 ? undefined : props.part.state.status === "error" ? "# 修补失败" : "正在修补"
           }
           part={props.part}
           spinner={props.part.state.status === "streaming" || props.part.state.status === "running"}
@@ -3467,14 +3467,14 @@ function Question(props: ToolProps) {
   const count = createMemo(() => questions().length)
 
   function format(answer?: ReadonlyArray<string>) {
-    if (!answer?.length) return "(no answer)"
+    if (!answer?.length) return "(无答案)"
     return answer.join(", ")
   }
 
   return (
     <Switch>
       <Match when={answers()}>
-        <BlockTool title="# Questions" part={props.part}>
+        <BlockTool title="# 问题" part={props.part}>
           <box gap={1}>
             <For each={questions()}>
               {(q, i) => (
@@ -3488,8 +3488,8 @@ function Question(props: ToolProps) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="→" pending="Asking questions…" complete={count()} part={props.part}>
-          Asked {count()} question{count() !== 1 ? "s" : ""}
+        <InlineTool icon="→" pending="正在询问…" complete={count()} part={props.part}>
+          已询问 {count()} 个问题{count() !== 1 ? "" : ""}
         </InlineTool>
       </Match>
     </Switch>
@@ -3499,8 +3499,8 @@ function Question(props: ToolProps) {
 function Skill(props: ToolProps) {
   const name = createMemo(() => stringValue(props.metadata.name) ?? stringValue(props.input.id))
   return (
-    <InlineTool icon="→" pending="Loading skill…" complete={name()} part={props.part}>
-      Skill "{name()}"
+    <InlineTool icon="→" pending="正在加载技能…" complete={name()} part={props.part}>
+      技能 "{name()}"
     </InlineTool>
   )
 }
@@ -3522,7 +3522,7 @@ function Diagnostics(props: { diagnostics: unknown; filePath: string }) {
         <For each={errors()}>
           {(diagnostic) => (
             <text fg={theme.text.feedback.error.base}>
-              Error [{diagnostic.range.start.line + 1}:{diagnostic.range.start.character + 1}] {diagnostic.message}
+              错误 [{diagnostic.range.start.line + 1}:{diagnostic.range.start.character + 1}] {diagnostic.message}
             </text>
           )}
         </For>

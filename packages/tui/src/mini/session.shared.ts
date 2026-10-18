@@ -36,7 +36,7 @@ export function messagePrompt(message: Pick<SessionMessageUser, "text" | "files"
         source: file.mention
           ? {
               type: "file",
-              path: file.name ?? (file.uri.startsWith("data:") ? "inline attachment" : file.uri),
+              path: file.name ?? (file.uri.startsWith("data:") ? "内联附件" : file.uri),
               text: { start: file.mention.start, end: file.mention.end, value: file.mention.text },
             }
           : undefined,

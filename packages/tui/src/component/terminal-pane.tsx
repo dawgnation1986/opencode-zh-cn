@@ -240,7 +240,7 @@ export function TerminalPane(props: {
       }
       if (message.type !== "attached") return
       if (!("inputProtocol" in message) || message.inputProtocol !== 1) {
-        setFailure("Persistent terminal server is out of date; restart OpenCode")
+        setFailure("持久终端服务器已过期；请重启 OpenCode")
         next.close()
         return
       }
@@ -264,7 +264,7 @@ export function TerminalPane(props: {
       if (disposed) return
       const focused = terminal?.focused
       terminal = undefined
-      setFailure("Terminal connection failed")
+      setFailure("终端连接失败")
       if (focused) props.onDisconnect?.()
     })
     next.addEventListener("close", () => {
@@ -272,7 +272,7 @@ export function TerminalPane(props: {
       const focused = terminal?.focused
       terminal = undefined
       // The removal event arrives separately; keep the terminal visible until then.
-      if (!exited) setFailure("Terminal disconnected")
+      if (!exited) setFailure("终端已断开连接")
       if (focused) props.onDisconnect?.()
     })
     socket = next

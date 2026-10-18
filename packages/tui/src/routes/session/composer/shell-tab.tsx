@@ -53,8 +53,8 @@ export function ShellTab(props: { sessionID: string }) {
       hints: () =>
         selectedEntry()
           ? [
-              { label: "output", shortcut: shortcuts.get("composer.shell.select") ?? "" },
-              { label: "kill", shortcut: shortcuts.get("composer.shell.kill") ?? "" },
+              { label: "输出", shortcut: shortcuts.get("composer.shell.select") ?? "" },
+              { label: "终止", shortcut: shortcuts.get("composer.shell.kill") ?? "" },
             ]
           : [],
     })
@@ -68,7 +68,7 @@ export function ShellTab(props: { sessionID: string }) {
     commands: [
       {
         id: "composer.shell.up",
-        title: "Previous shell",
+        title: "上一个 Shell",
         group: "Composer",
         run() {
           if (store.selected === 0) {
@@ -80,7 +80,7 @@ export function ShellTab(props: { sessionID: string }) {
       },
       {
         id: "composer.shell.down",
-        title: "Next shell",
+        title: "下一个 Shell",
         group: "Composer",
         run() {
           const list = entries()
@@ -90,13 +90,13 @@ export function ShellTab(props: { sessionID: string }) {
       },
       {
         id: "composer.shell.select",
-        title: "View shell output",
+        title: "查看 Shell 输出",
         group: "Composer",
         run: open,
       },
       {
         id: "composer.shell.kill",
-        title: "Kill shell command",
+        title: "终止 Shell 命令",
         group: "Composer",
         run() {
           const entry = selectedEntry()
@@ -113,7 +113,7 @@ export function ShellTab(props: { sessionID: string }) {
   return (
     <Show when={composer.active("shell")}>
       <scrollbox scrollbarOptions={{ visible: false }} maxHeight={5} ref={(r: ScrollBoxRenderable) => (scroll = r)}>
-        <Show when={entries().length > 0} fallback={<text fg={theme.text.muted}> No shell commands</text>}>
+        <Show when={entries().length > 0} fallback={<text fg={theme.text.muted}> 无 Shell 命令</text>}>
           <For each={entries()}>
             {(shell, index) => {
               const active = createMemo(() => index() === store.selected)

@@ -14,7 +14,7 @@ export function DiffFileMenu(props: {
   const dimensions = useTerminalDimensions()
   const theme = props.context.theme
   const [hovered, setHovered] = createSignal(false)
-  const label = () => (props.reviewed ? "Mark incomplete" : "Mark complete")
+  const label = () => (props.reviewed ? "标记为未完成" : "标记为已完成")
   const width = () => Math.min(19, dimensions().width)
   const run = () => {
     props.onClose()
@@ -24,7 +24,7 @@ export function DiffFileMenu(props: {
   props.context.keymap.layer(() => ({
     mode: "menu",
     commands: [
-      { bind: "escape,ctrl+c", title: "Close file menu", group: "Diff", run: props.onClose },
+      { bind: "escape,ctrl+c", title: "关闭文件菜单", group: "Diff", run: props.onClose },
       { bind: "return", title: label(), group: "Diff", run },
     ],
   }))

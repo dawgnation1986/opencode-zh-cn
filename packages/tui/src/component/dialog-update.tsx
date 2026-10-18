@@ -47,13 +47,13 @@ export function DialogUpdate(props: {
     if (type === "installing") return []
     const confirm =
       type === "available"
-        ? { label: "Update", run: props.install }
+        ? { label: "更新", run: props.install }
         : type === "installed"
-          ? { label: "Restart", run: props.restart }
+          ? { label: "重启", run: props.restart }
           : undefined
     return [
       {
-        label: "Skip",
+        label: "跳过",
         run: () => {
           props.skip()
           dialog.clear()
@@ -70,13 +70,13 @@ export function DialogUpdate(props: {
     commands: [
       {
         bind: "return",
-        title: "Confirm update action",
+        title: "确认更新操作",
         group: "Dialog",
         run: () => void buttons()[newDesigns() ? buttons().length - 1 : active()]?.run(),
       },
       ...(newDesigns() ? [] : ["left", "right", "tab", "shift+tab"]).map((bind) => ({
         bind,
-        title: bind === "left" || bind === "shift+tab" ? "Previous update action" : "Next update action",
+        title: bind === "left" || bind === "shift+tab" ? "上一个更新操作" : "下一个更新操作",
         group: "Dialog",
         run: () => {
           const count = buttons().length
@@ -92,10 +92,10 @@ export function DialogUpdate(props: {
         <DialogHeader
           title={
             state().type === "installing"
-              ? "Updating OpenCode"
+              ? "正在更新 OpenCode"
               : state().type === "available" || state().type === "failed"
-                ? "Update available"
-                : "Update"
+                ? "有可用更新"
+                : "更新"
           }
         />
       }
@@ -133,25 +133,25 @@ export function DialogUpdate(props: {
         {(current) => (
           <Switch>
             <Match when={current.type === "checking"}>
-              <Spinner shimmer={theme.text.base}>Checking for updates…</Spinner>
+              <Spinner shimmer={theme.text.base}>正在检查更新…</Spinner>
             </Match>
             <Match when={current.type === "available"}>
               <text fg={theme.text.muted}>
-                An update is available. After installing, you'll be prompted to restart OpenCode.
+                有新版本可用。安装后将提示你重启 OpenCode。
               </text>
             </Match>
             <Match when={current.type === "installing"}>
               <Spinner shimmer={theme.text.base}>
-                {current.type === "installing" ? `Installing OpenCode ${current.version}…` : ""}
+                {current.type === "installing" ? `正在安装 OpenCode ${current.version}…` : ""}
               </Spinner>
             </Match>
             <Match when={current.type === "installed"}>
               <text fg={theme.text.muted} wrapMode="word">
-                Update successful! A restart is required. Any active sessions will be resumed automatically.
+                更新成功！需要重启。所有活动会话将自动恢复。
               </text>
             </Match>
             <Match when={current.type === "current"}>
-              <text fg={theme.text.muted}>OpenCode is already up to date.</text>
+              <text fg={theme.text.muted}>OpenCode 已是最新版本。</text>
             </Match>
             <Match when={current.type === "unavailable"}>
               <text fg={theme.text.muted} wrapMode="word">

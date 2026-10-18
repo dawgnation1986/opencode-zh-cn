@@ -50,7 +50,7 @@ export function SubagentsTab(props: { sessionID: string }) {
             ? Locale.titlecase(session.agent)
             : agentMatch
               ? Locale.titlecase(agentMatch[1])
-              : "Subagent",
+              : "子代理",
           title: agentMatch ? title.replace(agentMatch[0], "").trim() || title : title,
           status: data.session.status(session.id),
           current: session.id === route.sessionID,
@@ -116,15 +116,15 @@ export function SubagentsTab(props: { sessionID: string }) {
   onMount(() => {
     const cleanup = composer.register({
       id: "subagents",
-      label: "Subagents",
+      label: "子代理",
       hints: () => {
         const entry = selectedEntry()
         return [
           ...(entry?.status === "running"
-            ? [{ label: "interrupt", shortcut: shortcuts.get("composer.subagent.interrupt") ?? "" }]
+            ? [{ label: "中断", shortcut: shortcuts.get("composer.subagent.interrupt") ?? "" }]
             : []),
           {
-            label: `show ${filter.active ? "inactive" : "active"}`,
+            label: `显示${filter.active ? "未活动" : "活动"}`,
             shortcut: shortcuts.get("composer.subagent.toggle-activity") ?? "",
           },
         ]
@@ -140,7 +140,7 @@ export function SubagentsTab(props: { sessionID: string }) {
     commands: [
       {
         id: "composer.subagent.up",
-        title: "Previous subagent",
+        title: "上一个子代理",
         group: "Composer",
         run() {
           if (store.selected === 0) {
@@ -152,7 +152,7 @@ export function SubagentsTab(props: { sessionID: string }) {
       },
       {
         id: "composer.subagent.down",
-        title: "Next subagent",
+        title: "下一个子代理",
         group: "Composer",
         run() {
           const list = entries()
@@ -162,7 +162,7 @@ export function SubagentsTab(props: { sessionID: string }) {
       },
       {
         id: "composer.subagent.select",
-        title: "Navigate to subagent",
+        title: "跳转到子代理",
         group: "Composer",
         run() {
           const entry = entries()[store.selected]
@@ -171,7 +171,7 @@ export function SubagentsTab(props: { sessionID: string }) {
       },
       {
         id: "composer.subagent.toggle-activity",
-        title: "Toggle active subagents",
+        title: "切换活动子代理",
         group: "Composer",
         bind: "ctrl+a",
         run() {
@@ -182,7 +182,7 @@ export function SubagentsTab(props: { sessionID: string }) {
       },
       {
         id: "composer.subagent.interrupt",
-        title: "Interrupt subagent",
+        title: "中断子代理",
         group: "Composer",
         run() {
           const entry = selectedEntry()
@@ -198,13 +198,13 @@ export function SubagentsTab(props: { sessionID: string }) {
       <scrollbox scrollbarOptions={{ visible: false }} maxHeight={5} ref={(r: ScrollBoxRenderable) => (scroll = r)}>
         <Show
           when={entries().length > 0}
-          fallback={<text fg={theme.text.muted}> No {filter.active ? "active" : "inactive"} subagents</text>}
+          fallback={<text fg={theme.text.muted}> 无{filter.active ? "活动" : "未活动"}子代理</text>}
         >
           <For each={entries()}>
             {(entry, index) => {
               const active = createMemo(() => index() === store.selected)
               const status = createMemo(() => {
-                if (entry.status === "running") return "Running"
+                if (entry.status === "running") return "运行中"
                 return ""
               })
               return (

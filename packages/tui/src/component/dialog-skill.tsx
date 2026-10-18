@@ -55,7 +55,7 @@ export function DialogSkill(props: DialogSkillProps) {
 
   return (
     <DialogSelect
-      title="Skills"
+      title="技能"
       options={options()}
       renderFilter={!showError() && !skills.loading}
       locked={showError() || skills.loading}
@@ -63,29 +63,29 @@ export function DialogSkill(props: DialogSkillProps) {
         <Switch
           fallback={
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-              <text fg={theme.text.muted}>No skills available</text>
+              <text fg={theme.text.muted}>暂无可用技能</text>
             </box>
           }
         >
           <Match when={showError()}>
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
               <text fg={theme.text.feedback.error.base} attributes={TextAttributes.BOLD}>
-                Could not load skills
+                无法加载技能
               </text>
               <text fg={theme.text.muted}>{errorMessage(loadError())}</text>
-              <text fg={theme.text.muted}>Close and reopen Skills to try again.</text>
+              <text fg={theme.text.muted}>请关闭并重新打开技能后重试。</text>
             </box>
           </Match>
           <Match when={skills.loading}>
             <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-              <text fg={theme.text.muted}>Loading skills…</text>
+              <text fg={theme.text.muted}>正在加载技能…</text>
             </box>
           </Match>
         </Switch>
       }
       noMatchView={
         <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-          <text fg={theme.text.muted}>No skills found</text>
+          <text fg={theme.text.muted}>未找到技能</text>
         </box>
       }
     />

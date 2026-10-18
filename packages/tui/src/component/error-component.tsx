@@ -41,8 +41,8 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
         success: "#7fd88f",
       }
 
-  const message = props.error.message || "An unknown error occurred."
-  const stack = props.error.stack || "No stack trace available."
+  const message = props.error.message || "发生未知错误。"
+  const stack = props.error.stack || "无可用堆栈信息。"
   const issueURL = buildIssueURL(message, stack, app.version)
 
   const copyReport = () => {
@@ -55,12 +55,12 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
   const actions = [
     {
       key: "c",
-      label: () => ({ idle: "Copy report", copied: "✓ Copied", failed: "Copy failed" })[copyState()],
+      label: () => ({ idle: "复制报告", copied: "✓ 已复制", failed: "复制失败" })[copyState()],
       copy: true,
       onUse: copyReport,
     },
-    { key: "r", label: () => "Restart", onUse: props.reset },
-    { key: "q", label: () => "Quit", onUse: () => exit() },
+    { key: "r", label: () => "重启", onUse: props.reset },
+    { key: "q", label: () => "退出", onUse: () => exit() },
   ]
   const [selected, setSelected] = createSignal(0)
   const move = (delta: number) => setSelected((prev) => (prev + delta + actions.length) % actions.length)
@@ -117,10 +117,10 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
         {/* Headline */}
         <box flexDirection="column" alignItems="center" flexShrink={0}>
           <text attributes={TextAttributes.BOLD} fg={colors.text}>
-            OpenCode crashed
+            OpenCode 崩溃
           </text>
           <Show when={showSubtext()}>
-            <text fg={colors.muted}>An unexpected error stopped the session.</text>
+            <text fg={colors.muted}>意外错误导致会话中断。</text>
           </Show>
         </box>
 
@@ -130,7 +130,7 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
           border
           borderStyle="rounded"
           borderColor={colors.error}
-          title=" Error "
+          title=" 错误 "
           titleColor={colors.error}
           paddingLeft={2}
           paddingRight={2}
@@ -184,9 +184,9 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
           border
           borderStyle="rounded"
           borderColor={colors.borderSubtle}
-          title=" Stack trace "
+          title=" 堆栈信息 "
           titleColor={colors.muted}
-          bottomTitle=" ↑↓ scroll "
+          bottomTitle=" ↑↓ 滚动 "
           bottomTitleAlignment="right"
           paddingLeft={1}
           paddingRight={1}
@@ -205,10 +205,10 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
           <box flexDirection="column" alignItems="center" flexShrink={0}>
             <text fg={colors.muted}>
               {copyState() === "copied"
-                ? "Report copied — paste it into a new GitHub issue."
+                ? "报告已复制 — 粘贴到新的 GitHub issue 中。"
                 : copyState() === "failed"
-                  ? "Clipboard write failed. Try again or report the crash manually."
-                  : "Copy the report and open a GitHub issue to help us fix this."}
+                  ? "写入剪贴板失败。请重试或手动提交崩溃报告。"
+                  : "复制报告并提交 GitHub issue，帮助我们修复此问题。"}
             </text>
             <text fg={colors.muted}>OpenCode {app.version}</text>
           </box>

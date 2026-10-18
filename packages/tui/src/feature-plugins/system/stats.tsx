@@ -99,7 +99,7 @@ export function StatsPoster(props: { stats: SessionStatsInfo }) {
               .months.map((month) => (month.label.length <= month.span * 2 ? month.label : "").padEnd(month.span * 2))
               .join("")}
         </text>
-        <For each={["M", "T", "W", "T", "F", "S", "S"]}>
+        <For each={["一", "二", "三", "四", "五", "六", "日"]}>
           {(day, index) => (
             <box flexDirection="row" height={1}>
               <text fg={theme.text.muted}>{day + "   "}</text>
@@ -114,7 +114,7 @@ export function StatsPoster(props: { stats: SessionStatsInfo }) {
           )}
         </For>
         <Show when={calendar().clipped}>
-          <text fg={theme.text.muted}>Your last {calendar().weeks.length} weeks</text>
+          <text fg={theme.text.muted}>最近 {calendar().weeks.length} 周</text>
         </Show>
       </box>
       <box width="100%" flexDirection="row" justifyContent="space-around">
@@ -123,7 +123,7 @@ export function StatsPoster(props: { stats: SessionStatsInfo }) {
             <box alignItems="center">
               <text fg={theme.text.base} attributes={TextAttributes.BOLD}>
                 {statsNumber(metric.value)}
-                {metric.label === "best streak" ? " days" : ""}
+                {metric.label === "最佳连续" ? " 天" : ""}
               </text>
               <text fg={theme.text.muted}>{metric.label}</text>
             </box>
@@ -149,7 +149,7 @@ function StatsPage(props: { context: Plugin.Context; onClose: () => void }) {
   const theme = useTheme()
 
   props.context.keymap.layer(() => ({
-    commands: [{ bind: "escape", title: "back", run: props.onClose }],
+    commands: [{ bind: "escape", title: "返回", run: props.onClose }],
   }))
 
   return (
@@ -167,10 +167,10 @@ function StatsPage(props: { context: Plugin.Context; onClose: () => void }) {
         <Show
           when={!result.error}
           fallback={
-            <text fg={theme.text.feedback.error.base}>Could not load stats. Reopen /stats to try again.</text>
+            <text fg={theme.text.feedback.error.base}>无法加载统计。请重新打开 /stats 再试一次。</text>
           }
         >
-          <Show when={result()} fallback={<text fg={theme.text.muted}>Gathering your stats…</text>}>
+          <Show when={result()} fallback={<text fg={theme.text.muted}>正在汇总你的统计…</text>}>
             {(value) => <StatsPoster stats={value()} />}
           </Show>
         </Show>
@@ -195,7 +195,7 @@ export default Plugin.define({
           commands: [
             {
               id: "stats.open",
-              title: "Usage statistics",
+              title: "使用统计",
               group: "System",
               slash: { name: "stats" },
               palette: true,

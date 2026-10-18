@@ -26,7 +26,7 @@ function Mcp(props: { context: Plugin.Context }) {
           <Switch>
             <Match when={failed()}>
               <span style={{ fg: props.context.theme.text.feedback.error.base }}>⊙ </span>
-              {failed()} MCP failed
+              {failed()} MCP 失败
             </Match>
             <Match when={true}>
               <span
@@ -64,7 +64,7 @@ function Plugins(props: { context: Plugin.Context }) {
       <box gap={1} flexDirection="row" flexShrink={0} onMouseUp={() => props.context.keymap.dispatch("plugins.list")}>
         <text fg={props.context.theme.text.base}>
           <span style={{ fg: props.context.theme.text.feedback.error.base }}>⊙ </span>
-          {failed()} plugin{failed() === 1 ? "" : "s"} failed
+          {failed()} 个插件{failed() === 1 ? "" : ""} 失败
         </text>
         <Show when={visibility().pluginCommand}>
           <text fg={props.context.theme.text.muted}>/plugins</text>

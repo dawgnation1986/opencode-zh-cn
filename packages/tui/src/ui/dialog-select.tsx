@@ -454,7 +454,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       commands: [
         {
           id: "dialog.select.prev",
-          title: "Previous item",
+          title: "上一项",
           group: "Dialog",
           run() {
             move(-1)
@@ -462,7 +462,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.next",
-          title: "Next item",
+          title: "下一项",
           group: "Dialog",
           run() {
             move(1)
@@ -470,7 +470,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.page_up",
-          title: "Page up",
+          title: "向上翻页",
           group: "Dialog",
           run() {
             move(-10)
@@ -478,7 +478,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.page_down",
-          title: "Page down",
+          title: "向下翻页",
           group: "Dialog",
           run() {
             move(10)
@@ -486,7 +486,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.home",
-          title: "First item",
+          title: "第一项",
           group: "Dialog",
           run() {
             if (props.locked) return
@@ -495,7 +495,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.end",
-          title: "Last item",
+          title: "最后一项",
           group: "Dialog",
           run() {
             if (props.locked) return
@@ -504,7 +504,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           id: "dialog.select.submit",
-          title: "Select item",
+          title: "选择项",
           group: "Dialog",
           run: submit,
         },
@@ -520,7 +520,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           ? [
               {
                 bind: "escape",
-                title: "Back",
+                title: "返回",
                 group: "Dialog",
                 run: () => {
                   if (renderer.getSelection()) {
@@ -536,13 +536,13 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           ? [
               {
                 bind: "alt+up",
-                title: "Previous section",
+                title: "上一节",
                 group: "Dialog",
                 run: () => moveSection(-1),
               },
               {
                 bind: "alt+down",
-                title: "Next section",
+                title: "下一节",
                 group: "Dialog",
                 run: () => moveSection(1),
               },
@@ -648,7 +648,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           r.focus()
         }, 1)
       }}
-      placeholder={(searchInTitle() ? props.titlePlaceholder : undefined) ?? props.placeholder ?? "Search"}
+      placeholder={(searchInTitle() ? props.titlePlaceholder : undefined) ?? props.placeholder ?? "搜索"}
       placeholderColor={newDesigns() ? theme.text.faint : theme.text.muted}
     />
   )
@@ -706,14 +706,14 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
               fallback={
                 props.emptyView ?? (
                   <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-                    <text fg={theme.text.muted}>No items available</text>
+                    <text fg={theme.text.muted}>无可用项</text>
                   </box>
                 )
               }
             >
               {props.noMatchView ?? (
                 <box paddingLeft={DIALOG_LIST_INSET} paddingRight={DIALOG_LIST_INSET}>
-                  <text fg={theme.text.muted}>No results found</text>
+                  <text fg={theme.text.muted}>未找到结果</text>
                 </box>
               )}
             </Show>
