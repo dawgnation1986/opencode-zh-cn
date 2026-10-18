@@ -7,6 +7,7 @@ import { errorMessage } from "../util/error"
 import { useExit } from "./exit"
 import { useDialog } from "../ui/dialog"
 import { DialogUpdate } from "../component/dialog-update"
+import { DialogConfirm } from "../ui/dialog-confirm"
 
 type ClientNotice = { readonly type: "available" | "installed"; readonly version: string }
 type Notice = ClientNotice & ({ readonly source: "client" } | { readonly source: "server"; readonly remote: boolean })
@@ -61,15 +62,32 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       }).catch((error) => log.error("failed to persist update notification", { error }))
     }
 
+    const apply = async (version: string) => {
+      const updater = props.updater
+      if (!updater) return
+      setState({ type: "installing", version })
+      await updater.apply(version).then(
+        () => setState({ type: "installed", version }),
+        (error) => setState({ type: "failed", message: errorMessage(error) }),
+      )
+    }
+
     const install = async () => {
       const updater = props.updater
       const current = state()
       if (!updater || !current || current.type !== "available") return
-      setState({ type: "installing", version: current.version })
-      await updater.apply(current.version).then(
-        () => setState({ type: "installed", version: current.version }),
-        (error) => setState({ type: "failed", message: errorMessage(error) }),
-      )
+      dialog.replace(() => (
+        <DialogConfirm
+          title="更新将替换为官方英文版"
+          message="当前为非官方简体中文汉化版本。更新完成后将被替换为官方英文版本，汉化将丢失。是否仍要继续更新？"
+          label={{ confirm: "继续更新", cancel: "取消" }}
+          onConfirm={() => {
+            void apply(current.version)
+            show()
+          }}
+          onCancel={show}
+        />
+      ))
     }
 
     const check = async (signal: AbortSignal) => {
@@ -93,15 +111,7 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
       exit()
     }
 
-    const open = (origin: "manual" | "notification") => {
-      if (!props.updater) return
-      const current = notification()
-      const known = current && (current.source === "client" || !current.remote) ? current : undefined
-      if (origin === "notification" && !known) return
-      const active = state()
-      // The notification can predate an installation through /update.
-      if (known && active?.type !== "installing" && !(active?.type === "installed" && active.version === known.version))
-        setState({ type: known.type, version: known.version })
+    const show = () => {
       const status = state()?.type
       dialog.replace(() => (
         <DialogUpdate
@@ -112,6 +122,18 @@ export const { use: useUpdateNotification, provider: UpdateNotificationProvider 
           restart={restart}
         />
       ))
+    }
+
+    const open = (origin: "manual" | "notification") => {
+      if (!props.updater) return
+      const current = notification()
+      const known = current && (current.source === "client" || !current.remote) ? current : undefined
+      if (origin === "notification" && !known) return
+      const active = state()
+      // The notification can predate an installation through /update.
+      if (known && active?.type !== "installing" && !(active?.type === "installed" && active.version === known.version))
+        setState({ type: known.type, version: known.version })
+      show()
     }
 
     onMount(() => {

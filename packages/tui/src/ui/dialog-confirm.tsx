@@ -98,7 +98,9 @@ export function DialogConfirm(props: DialogConfirmProps) {
         </box>
       }
     >
-      <text fg={theme.text.muted}>{props.message}</text>
+      <text fg={theme.text.muted} wrapMode="word">
+        {props.message}
+      </text>
     </DialogLayout>
   )
 }
